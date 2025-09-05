@@ -6,323 +6,220 @@ const API_KEY = "AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI";
 
 
 
-// API endpoints
-const API_URL_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
-const TEXT_AUDIO_MODEL = "gemini-2.5-flash-preview-tts:generateContent";
+const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
-// DOM selectors
+// ---- State Machine ----
+const lessonStates = { INITIAL: "initial", LISTENING: "listening", SPEAKING: "speaking" };
+let lessonState = lessonStates.INITIAL;
+
+// ---- Elements ----
 const actionButton = document.getElementById("action-button");
-const buttonContent = document.getElementById("button-content");
-const loadingSpinner = document.getElementById("loading-spinner");
 const chatHistory = document.getElementById("chat-history");
-const interimResults = document.getElementById("interim-results");
-const cancelButton = document.getElementById("cancel-button");
+const fallbackForm = document.getElementById("fallback-form");
 const fallbackInput = document.getElementById("fallback-text-input");
 
-// Constants
-const AI_VOICE_NAME = "Puck";
-const INITIAL_PROMPT = "Hello there. Let's practice speaking with confidence. How are you today?";
-const MAX_RETRIES = 3;
-const MAX_RECOGNITION_RETRIES = 5;
-
-// State
-let lessonState = "initial"; // "initial", "listening", "speaking", "paused"
-let recognition = null;
+let recognition;
 let currentAudio = null;
-let recognitionStopFlag = false;
-let recognitionRetryCount = 0;
+let originalHandler = null;
 
-// Build URL
-function buildApiUrl(modelName) {
-    return `${API_URL_BASE}${modelName}?key=${API_KEY}`;
-}
+// ---- Setup ----
+document.addEventListener("DOMContentLoaded", () => {
+  if (!API_KEY) {
+    addMessage("⚠️ No API key found. Please add your Gemini API key in <code>script.js</code>.", "ai");
+  }
+  originalHandler = handleButtonClick;
+  actionButton.addEventListener("click", originalHandler);
 
-// Fetch with retry
-async function fetchWithRetry(url, options, retries = MAX_RETRIES) {
-    try {
-        const response = await fetch(url, options);
-        if (!response.ok) {
-            const errorBody = await response.json().catch(() => ({}));
-            console.error("API response not OK:", response.status, response.statusText, errorBody);
-            if (retries > 0 && (response.status === 429 || response.status >= 500)) {
-                const delay = (MAX_RETRIES - retries) * 1000;
-                await new Promise(r => setTimeout(r, delay));
-                return fetchWithRetry(url, options, retries - 1);
-            }
-            throw new Error(`API request failed with status ${response.status}`);
-        }
-        return response;
-    } catch (error) {
-        console.error("Fetch failed:", error);
-        if (retries > 0) {
-            const delay = (MAX_RETRIES - retries) * 1000;
-            await new Promise(r => setTimeout(r, delay));
-            return fetchWithRetry(url, options, retries - 1);
-        }
-        throw error;
+  // fallback input
+  fallbackForm.addEventListener("submit", e => {
+    e.preventDefault();
+    const text = fallbackInput.value.trim();
+    if (text) {
+      processUserInput(text);
+      fallbackInput.value = "";
     }
+  });
+
+  initSpeechRecognition();
+});
+
+// ---- Chat UI ----
+function addMessage(text, sender, retryCallback = null) {
+  const bubble = document.createElement("div");
+  bubble.className = `message ${sender}-message`;
+
+  if (sender === "ai") {
+    const avatar = document.createElement("span");
+    avatar.className = "avatar";
+    avatar.textContent = "🤖";
+    bubble.appendChild(avatar);
+  }
+
+  const content = document.createElement("div");
+  content.textContent = text;
+  bubble.appendChild(content);
+
+  if (retryCallback) {
+    const retryBtn = document.createElement("button");
+    retryBtn.textContent = "Retry";
+    retryBtn.className = "retry-button";
+    retryBtn.onclick = () => {
+      bubble.remove(); // replace instead of stacking
+      retryCallback();
+    };
+    bubble.appendChild(retryBtn);
+  }
+
+  chatHistory.appendChild(bubble);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
 }
 
-// UI helpers
-function toggleButtonState(state) {
-    if (state === "loading") {
-        buttonContent.classList.add("hidden");
-        loadingSpinner.classList.remove("hidden");
-        actionButton.disabled = true;
-        actionButton.classList.remove("pulse-animate");
-    } else {
-        buttonContent.classList.remove("hidden");
-        loadingSpinner.classList.add("hidden");
-        actionButton.disabled = false;
-    }
+function updateButtonText(text) {
+  actionButton.textContent = text;
 }
-function updateButtonText(text) { buttonContent.textContent = text; }
-function showCancelButton(show) { cancelButton.classList.toggle("hidden", !show); }
+
 function resetUI() {
-    lessonState = "initial";
-    recognitionStopFlag = true;
-    updateButtonText("Start Lesson");
-    showCancelButton(false);
-    actionButton.classList.remove("pulse-animate");
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.removeAttribute("src");
+  if (currentAudio) {
+    if (currentAudio.src && currentAudio.src.startsWith("blob:")) {
+      URL.revokeObjectURL(currentAudio.src);
     }
+    currentAudio.pause();
+    currentAudio.removeAttribute("src");
+    currentAudio = null;
+  }
+  lessonState = lessonStates.INITIAL;
+  updateButtonText("🎤 Start Lesson");
+  actionButton.onclick = originalHandler;
 }
 
-// Chat history
-function addMessage(text, sender) {
-    const msg = document.createElement("div");
-    msg.classList.add("message", sender === "ai" ? "ai-message" : "user-message");
-    msg.textContent = text;
-    chatHistory.appendChild(msg);
-    chatHistory.scrollTop = chatHistory.scrollHeight;
-}
+// ---- Speech Recognition ----
+function initSpeechRecognition() {
+  if ("webkitSpeechRecognition" in window) {
+    recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
 
-// Base64 decoder (optimized)
-function base64ToArrayBuffer(base64) {
-    return Uint8Array.from(atob(base64), c => c.charCodeAt(0)).buffer;
-}
+    recognition.onresult = e => {
+      const transcript = Array.from(e.results)
+        .map(r => r[0].transcript)
+        .join("");
+      if (e.results[0].isFinal) processUserInput(transcript);
+    };
 
-// Unified AI call (text + audio)
-async function getTextAndAudio(prompt) {
-    try {
-        const payload = {
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-                responseModalities: ["TEXT", "AUDIO"],
-                speechConfig: {
-                    voiceConfig: { prebuiltVoiceConfig: { voiceName: AI_VOICE_NAME } }
-                }
-            }
-        };
+    recognition.onerror = e => {
+      console.error("Speech recognition error:", e);
+      addMessage("⚠️ Speech recognition error. Try again or type below.", "ai");
+      resetUI();
+    };
 
-        const response = await fetchWithRetry(buildApiUrl(TEXT_AUDIO_MODEL), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-        const parts = result?.candidates?.[0]?.content?.parts || [];
-
-        let text = null, audioUrl = null;
-        for (const p of parts) {
-            if (p.text) text = p.text;
-            if (p.inlineData?.data && p.inlineData?.mimeType?.startsWith("audio/")) {
-                const audioBlob = new Blob([base64ToArrayBuffer(p.inlineData.data)], {
-                    type: p.inlineData.mimeType
-                });
-                audioUrl = URL.createObjectURL(audioBlob);
-            }
-        }
-        return { text, audioUrl };
-    } catch (err) {
-        console.error("Unified AI call failed:", err);
-        throw err;
-    }
-}
-
-// Start lesson
-async function startLesson() {
-    lessonState = "speaking";
-    toggleButtonState("loading");
-    updateButtonText("Loading...");
-    showCancelButton(true);
-
-    try {
-        const { text, audioUrl } = await getTextAndAudio(INITIAL_PROMPT);
-        if (!text || !audioUrl) throw new Error("Incomplete AI response");
-
-        addMessage(text, "ai");
-        updateButtonText("Playing Voice...");
-
-        currentAudio.src = audioUrl;
-        currentAudio.play();
-
-        currentAudio.onended = () => {
-            URL.revokeObjectURL(audioUrl);
-            startSpeechRecognition();
-        };
-        currentAudio.onpause = () => URL.revokeObjectURL(audioUrl);
-        currentAudio.onerror = (e) => {
-            console.error("Audio playback error:", e);
-            addMessage("⚠️ There was an issue playing the audio. Please try again.", "ai");
-            resetUI();
-        };
-
-    } catch (err) {
-        console.error("Lesson start failed:", err);
-        addMessage("⚠️ Could not start lesson. Check your connection or API settings.", "ai");
+    recognition.onend = () => {
+      if (lessonState === lessonStates.LISTENING) {
         resetUI();
-    }
+      }
+    };
+  }
 }
 
-// Stop lesson
-function stopLesson() {
-    recognitionStopFlag = true;
-    if (recognition) recognition.stop();
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.removeAttribute("src");
-    }
-    lessonState = "paused";
-    toggleButtonState("idle");
-    actionButton.classList.remove("pulse-animate");
-}
-
-// Speech recognition
 function startSpeechRecognition() {
-    lessonState = "listening";
-    recognitionStopFlag = false;
-    recognitionRetryCount = 0;
-    updateButtonText("Listening...");
-    showCancelButton(true);
-    actionButton.classList.add("pulse-animate");
-
-    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
-        addMessage("🎤 Voice input not supported. Please type instead.", "ai");
-        fallbackInput.classList.remove("hidden");
-        fallbackInput.focus();
-        updateButtonText("Voice (Unavailable)");
-        return;
-    }
-
-    if (!recognition) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognition = new SpeechRecognition();
-        recognition.lang = "en-US";
-        recognition.interimResults = true;
-        recognition.continuous = true;
-
-        recognition.onstart = () => { interimResults.textContent = "Listening..."; };
-
-        recognition.onresult = e => {
-            let interim = "", final = "";
-            for (let i = e.resultIndex; i < e.results.length; ++i) {
-                const t = e.results[i][0].transcript;
-                if (e.results[i].isFinal) final += t + " ";
-                else interim += t;
-            }
-            interimResults.textContent = interim;
-            if (final.trim()) {
-                recognition.stop();
-                processUserSpeech(final.trim());
-            }
-        };
-
-        recognition.onend = () => {
-            interimResults.textContent = "";
-            actionButton.classList.remove("pulse-animate");
-            if (lessonState === "listening" && !recognitionStopFlag) {
-                recognitionRetryCount++;
-                if (recognitionRetryCount < MAX_RECOGNITION_RETRIES) {
-                    setTimeout(() => recognition.start(), 600);
-                } else {
-                    addMessage("⚠️ It seems my voice input is having trouble. Please try using the keyboard for now.", "ai");
-                    interimResults.textContent = "";
-                    recognitionStopFlag = true;
-                    stopLesson();
-                }
-            }
-        };
-
-        recognition.onerror = e => {
-            console.error("Speech recognition error:", e.error);
-            let msg = "⚠️ Speech recognition error.";
-            if (e.error === "network") msg = "⚠️ Network issue. Please check your connection.";
-            if (e.error === "not-allowed") msg = "⚠️ Mic access blocked. Please allow microphone use.";
-            addMessage(msg, "ai");
-            stopLesson();
-        };
-    }
+  if (recognition) {
+    lessonState = lessonStates.LISTENING;
+    updateButtonText("🎙️ Listening...");
     recognition.start();
+    navigator.vibrate?.(50);
+  } else {
+    addMessage("⚠️ Speech recognition not supported on this device.", "ai");
+  }
 }
 
-// Handle user speech
-async function processUserSpeech(finalTranscript) {
-    addMessage(finalTranscript, "user");
-    toggleButtonState("loading");
-    updateButtonText("Processing...");
-
-    try {
-        const { text, audioUrl } = await getTextAndAudio(finalTranscript);
-        if (!text || !audioUrl) throw new Error("Incomplete AI response");
-
-        addMessage(text, "ai");
-        updateButtonText("Playing Voice...");
-
-        currentAudio.src = audioUrl;
-        currentAudio.play();
-
-        currentAudio.onended = () => {
-            URL.revokeObjectURL(audioUrl);
-            startSpeechRecognition();
-        };
-        currentAudio.onpause = () => URL.revokeObjectURL(audioUrl);
-        currentAudio.onerror = (e) => {
-            console.error("Audio playback error:", e);
-            addMessage("⚠️ There was an issue playing the audio. Please try again.", "ai");
-            resetUI();
-        };
-
-    } catch (err) {
-        console.error("Processing user speech failed:", err);
-        addMessage("⚠️ I couldn't process that. Please try again.", "ai");
-        resetUI();
-    }
-}
-
-// Fallback text input
-fallbackInput.addEventListener("keydown", async e => {
-    if (e.key === "Enter") {
-        const text = e.target.value.trim();
-        if (!text) return;
-        addMessage(text, "user");
-        e.target.value = "";
-        toggleButtonState("loading");
-        updateButtonText("Processing...");
-        await processUserSpeech(text);
-    }
-});
-
-// Action button
-actionButton.addEventListener("click", () => {
-    if (!currentAudio) currentAudio = new Audio();
-    switch (lessonState) {
-        case "initial": startLesson(); break;
-        case "listening": stopLesson(); break;
-        case "speaking": break; // ignore
-        case "paused": startLesson(); break;
-    }
-});
-
-// Cancel button
-cancelButton.addEventListener("click", () => {
-    stopLesson();
+// ---- AI Interaction ----
+async function processUserInput(userText) {
+  addMessage(userText, "user");
+  updateButtonText("🤔 Thinking...");
+  try {
+    const { text, audioUrl } = await getTextAndAudio(userText);
+    await playAIResponse(text, audioUrl);
+  } catch (err) {
+    console.error("processUserInput error:", err);
+    addMessage("⚠️ Something went wrong.", "ai", () => processUserInput(userText));
     resetUI();
-});
+  }
+}
 
-// Init
-document.addEventListener("DOMContentLoaded", resetUI);
+async function getTextAndAudio(prompt) {
+  const body = {
+    contents: [{
+      parts: [
+        { text: prompt },
+        { inlineData: { mimeType: "audio/wav", data: "" } }
+      ]
+    }],
+    generationConfig: { responseModalities: ["TEXT", "AUDIO"] }
+  };
+
+  const res = await fetch(`${API_URL}?key=${API_KEY}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status}`);
+  }
+
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "⚠️ No AI response.";
+  const audioData = data.candidates?.[0]?.content?.parts?.[1]?.inlineData?.data;
+
+  if (!audioData) throw new Error("No audio data in response.");
+
+  const audioBlob = new Blob([base64ToArrayBuffer(audioData)], { type: "audio/wav" });
+  const audioUrl = URL.createObjectURL(audioBlob);
+  return { text, audioUrl };
+}
+
+// ---- Audio ----
+async function playAIResponse(text, audioUrl) {
+  addMessage(text, "ai");
+  lessonState = lessonStates.SPEAKING;
+  updateButtonText("🔊 Speaking...");
+
+  if (currentAudio) resetUI();
+  currentAudio = new Audio(audioUrl);
+
+  currentAudio.onended = () => resetUI();
+
+  currentAudio.onloadedmetadata = () => {
+    currentAudio.play().catch(() => {
+      updateButtonText("🔈 Tap to Play");
+      const tempHandler = () => {
+        currentAudio.play();
+        updateButtonText("Playing Voice...");
+        actionButton.onclick = originalHandler; // restore original handler
+      };
+      actionButton.onclick = tempHandler;
+    });
+
+    const leadIn = Math.max(0, currentAudio.duration * 1000 - 500);
+    setTimeout(startSpeechRecognition, leadIn);
+  };
+}
+
+// ---- Utils ----
+function base64ToArrayBuffer(base64) {
+  const binary = atob(base64);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+// ---- Button Click ----
+function handleButtonClick() {
+  if (lessonState === lessonStates.INITIAL) {
+    startSpeechRecognition();
+  } else {
+    resetUI();
+  }
+}
 
