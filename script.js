@@ -5,9 +5,11 @@
 const API_KEY = "AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI";
 
 
+
 // API endpoints for different Gemini models
-const TEXT_GENERATION_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + API_KEY;
-const TEXT_TO_SPEECH_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent";
+const API_URL_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
+const TEXT_GENERATION_MODEL = "gemini-1.5-flash:generateContent";
+const TEXT_TO_SPEECH_MODEL = "gemini-2.5-flash-preview-tts:generateContent";
 
 // DOM element selectors
 const actionButton = document.getElementById("action-button");
@@ -17,13 +19,56 @@ const chatHistory = document.getElementById("chat-history");
 const interimResults = document.getElementById("interim-results");
 const cancelButton = document.getElementById("cancel-button");
 
+// Constants
+const AI_VOICE_NAME = "Puck";
+const INITIAL_PROMPT = "Hello there. Let's practice speaking with confidence. How are you today?";
+const MAX_RETRIES = 3;
+
 // State variables
 let lessonState = "initial"; // "initial", "listening", "speaking", "paused"
 let recognition = null;
-let currentAudio = null;
+let currentAudio = null; // Reusable Audio object for iOS compatibility
+
+// Function to build API URLs consistently
+function buildApiUrl(modelName) {
+    return `${API_URL_BASE}${modelName}?key=${API_KEY}`;
+}
+
+// Reusable function to fetch with exponential backoff
+async function fetchWithRetry(url, options, retries = MAX_RETRIES) {
+    try {
+        const response = await fetch(url, options);
+
+        if (!response.ok) {
+            const errorBody = await response.json();
+            console.error("API response not OK:", response.status, response.statusText, errorBody);
+
+            if (retries > 0 && (response.status === 429 || response.status >= 500)) {
+                const delay = (MAX_RETRIES - retries) * 1000;
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return fetchWithRetry(url, options, retries - 1);
+            }
+            throw new Error(`API request failed with status: ${response.status}`);
+        }
+        return response;
+    } catch (error) {
+        console.error("Fetch failed:", error);
+        if (retries > 0) {
+            const delay = (MAX_RETRIES - retries) * 1000;
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchWithRetry(url, options, retries - 1);
+        }
+        throw error;
+    }
+}
 
 // Event listener for the main action button
 actionButton.addEventListener("click", () => {
+    // On the very first click, initialize the Audio object to satisfy iOS autoplay policy
+    if (!currentAudio) {
+        currentAudio = new Audio();
+    }
+
     switch (lessonState) {
         case "initial":
             startLesson();
@@ -91,11 +136,8 @@ async function startLesson() {
     updateButtonText("Loading...");
     showCancelButton(true);
 
-    // Initial AI prompt for a short, fast response
-    const prompt = "Hello there. Let's practice speaking with confidence. How are you today?";
-
     // Get the text first
-    const aiResponseText = await getAIResponse(prompt);
+    const aiResponseText = await getAIResponse(INITIAL_PROMPT);
 
     if (aiResponseText) {
         // Immediately add the text to the chat
@@ -132,21 +174,15 @@ async function getAIResponse(prompt) {
             }],
         };
 
-        const response = await fetch(TEXT_GENERATION_API_URL, {
+        const response = await fetchWithRetry(buildApiUrl(TEXT_GENERATION_MODEL), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        // Add a detailed log if the response is not OK
-        if (!response.ok) {
-            const errorBody = await response.json();
-            console.error("Text Generation API response not OK:", response.status, response.statusText, errorBody);
-            return null;
-        }
-
         const result = await response.json();
         const candidate = result.candidates?.[0];
+
         if (candidate && candidate.content?.parts?.[0]?.text) {
             return candidate.content.parts[0].text;
         } else {
@@ -181,24 +217,17 @@ async function speakResponse(text) {
                 responseModalities: ["AUDIO"],
                 speechConfig: {
                     voiceConfig: {
-                        prebuiltVoiceConfig: { voiceName: "Puck" }
+                        prebuiltVoiceConfig: { voiceName: AI_VOICE_NAME }
                     }
                 }
             },
         };
 
-        const response = await fetch(`${TEXT_TO_SPEECH_API_URL}?key=${API_KEY}`, {
+        const response = await fetchWithRetry(buildApiUrl(TEXT_TO_SPEECH_MODEL), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-
-        // Add a detailed log if the response is not OK
-        if (!response.ok) {
-            const errorBody = await response.json();
-            console.error("TTS API response not OK:", response.status, response.statusText, errorBody);
-            throw new Error("TTS API request failed.");
-        }
 
         const result = await response.json();
         const part = result?.candidates?.[0]?.content?.parts?.[0];
@@ -209,11 +238,21 @@ async function speakResponse(text) {
             // Correctly handle the pre-encoded audio from the API
             const audioBlob = new Blob([base64ToArrayBuffer(audioData)], { type: mimeType });
             const audioUrl = URL.createObjectURL(audioBlob);
-            currentAudio = new Audio(audioUrl);
+
+            // Re-use the existing Audio object and set its source
+            currentAudio.src = audioUrl;
             currentAudio.play();
+            
+            // Revoke the object URL on both ended and pause to prevent memory leaks
+            const cleanup = () => {
+                URL.revokeObjectURL(audioUrl);
+            };
             currentAudio.onended = () => {
+                cleanup();
                 startSpeechRecognition();
             };
+            currentAudio.onpause = cleanup;
+
         } else {
             console.error("Invalid audio data from TTS API.");
             throw new Error("Invalid audio data from API.");
@@ -221,7 +260,7 @@ async function speakResponse(text) {
     } catch (error) {
         console.error("Failed to speak response:", error);
         stopLesson();
-        addMessage("Sorry, I'm having trouble with my voice right now. Please try again later.", "ai");
+        addMessage("There was an error generating my voice. Please check your network and try again.", "ai");
         resetUI();
     }
 }
@@ -234,7 +273,7 @@ function startSpeechRecognition() {
     actionButton.classList.add("pulse-animate");
 
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        addMessage("Speech recognition is not supported in this browser. Please use Google Chrome.", "ai");
+        addMessage("Your browser does not support voice input. Please use the keyboard to type.", "ai");
         // Fallback to text input if Speech Recognition is not available
         document.getElementById("fallback-text-input").classList.remove("hidden");
         document.getElementById("fallback-text-input").focus();
@@ -242,64 +281,75 @@ function startSpeechRecognition() {
         return;
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = true;
-    recognition.continuous = true;
+    // Reuse the recognition instance if it already exists
+    if (!recognition) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = true;
+        recognition.continuous = true;
 
-    let finalTranscript = '';
+        recognition.onstart = () => {
+            interimResults.textContent = "Listening...";
+        };
 
-    recognition.onstart = () => {
-        interimResults.textContent = "Listening...";
-    };
-
-    recognition.onresult = (event) => {
-        let interimTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-            const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-                finalTranscript += transcript + ' ';
-            } else {
-                interimTranscript += transcript;
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript;
+                }
             }
-        }
-        interimResults.textContent = interimTranscript;
-    };
+            interimResults.textContent = interimTranscript;
 
-    recognition.onend = async () => {
-        interimResults.textContent = "";
-        actionButton.classList.remove("pulse-animate");
-        if (finalTranscript.trim().length > 0) {
-            addMessage(finalTranscript, "user");
-            toggleButtonState("loading");
-            updateButtonText("Processing...");
-            const aiResponseText = await getAIResponse(finalTranscript);
-            if (aiResponseText) {
-                addMessage(aiResponseText, "ai");
-                updateButtonText("Generating Voice...");
-                await speakResponse(aiResponseText);
-            } else {
-                addMessage("I'm sorry, I couldn't understand that. Can you please try again?", "ai");
-                await speakResponse("I'm sorry, I couldn't understand that. Can you please try again?");
+            if (finalTranscript.trim().length > 0) {
+                recognition.stop(); // Stop listening once a final result is received
+                processUserSpeech(finalTranscript);
             }
-        } else {
-            // Restart recognition if nothing was said
+        };
+
+        recognition.onend = () => {
+            interimResults.textContent = "";
+            actionButton.classList.remove("pulse-animate");
+            // Automatically restart if not in a paused state, but with a slight delay
             if (lessonState === "listening") {
-                startSpeechRecognition();
+                setTimeout(() => {
+                    recognition.start();
+                }, 500);
             }
-        }
-    };
+        };
 
-    recognition.onerror = (event) => {
-        console.error("Speech recognition error:", event.error);
-        if (event.error === 'network' || event.error === 'service-not-allowed') {
-            interimResults.textContent = "Network error. Please check your connection.";
-        }
-        stopLesson();
-    };
-
+        recognition.onerror = (event) => {
+            console.error("Speech recognition error:", event.error);
+            if (event.error === 'network' || event.error === 'service-not-allowed') {
+                interimResults.textContent = "Network error. Please check your connection.";
+            }
+            stopLesson();
+        };
+    }
+    
+    // Start listening
     recognition.start();
+}
+
+// Process the final transcript from the user
+async function processUserSpeech(finalTranscript) {
+    addMessage(finalTranscript, "user");
+    toggleButtonState("loading");
+    updateButtonText("Processing...");
+    const aiResponseText = await getAIResponse(finalTranscript);
+    if (aiResponseText) {
+        addMessage(aiResponseText, "ai");
+        updateButtonText("Generating Voice...");
+        await speakResponse(aiResponseText);
+    } else {
+        addMessage("I'm sorry, I couldn't understand that. Can you please try again?", "ai");
+        await speakResponse("I'm sorry, I couldn't understand that. Can you please try again?");
+    }
 }
 
 // Fallback for text input submission if Speech Recognition isn't available
@@ -329,4 +379,3 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initial UI setup on page load
     resetUI();
 });
-
