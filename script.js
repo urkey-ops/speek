@@ -5,9 +5,9 @@
 const API_KEY = "AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI";
 
 
-
-// API URL for the model that generates both text and audio
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent";
+// API endpoints for different Gemini models
+const TEXT_GENERATION_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + API_KEY;
+const TEXT_TO_SPEECH_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent";
 
 // DOM element selectors
 const actionButton = document.getElementById("action-button");
@@ -91,9 +91,20 @@ async function startLesson() {
 
     // Initial AI prompt
     const prompt = "Please introduce yourself and a lesson on confident speaking. Respond in a cheerful tone. Keep your response short and concise, and end with a question.";
-    
-    // Call the combined function to get both text and audio
-    await getAIResponseAndSpeak(prompt);
+
+    // Get the text first
+    const aiResponseText = await getAIResponse(prompt);
+
+    if (aiResponseText) {
+        // Immediately add the text to the chat
+        addMessage(aiResponseText, "ai");
+        updateButtonText("Generating Voice...");
+        // Then get and play the audio
+        await speakResponse(aiResponseText);
+    } else {
+        resetUI();
+        addMessage("Sorry, I'm having trouble with my voice right now. Please try again later.", "ai");
+    }
 }
 
 // Function to handle the end of the lesson
@@ -106,6 +117,40 @@ function stopLesson() {
     }
     lessonState = "paused";
     toggleButtonState("idle");
+}
+
+// Function to send a request to the Gemini Generative model for text only
+async function getAIResponse(prompt) {
+    try {
+        const payload = {
+            contents: [{
+                parts: [{ text: prompt }]
+            }],
+        };
+
+        const response = await fetch(TEXT_GENERATION_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            console.error("API response not OK:", response.status, response.statusText);
+            return null;
+        }
+
+        const result = await response.json();
+        const candidate = result.candidates?.[0];
+        if (candidate && candidate.content?.parts?.[0]?.text) {
+            return candidate.content.parts[0].text;
+        } else {
+            console.error("No valid text found in API response.");
+            return null;
+        }
+    } catch (error) {
+        console.error("Failed to fetch AI response:", error);
+        return null;
+    }
 }
 
 // Function to convert PCM audio data to a WAV blob
@@ -155,15 +200,15 @@ function base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
-// Function to generate text and audio in a single API call
-async function getAIResponseAndSpeak(prompt) {
+// Function to generate and play TTS audio
+async function speakResponse(text) {
     try {
         const payload = {
             contents: [{
-                parts: [{ text: prompt }]
+                parts: [{ text: text }]
             }],
             generationConfig: {
-                responseModalities: ["TEXT", "AUDIO"],
+                responseModalities: ["AUDIO"],
                 speechConfig: {
                     voiceConfig: {
                         prebuiltVoiceConfig: { voiceName: "Puck" }
@@ -172,38 +217,23 @@ async function getAIResponseAndSpeak(prompt) {
             },
         };
 
-        const response = await fetch(`${GEMINI_API_URL}?key=${API_KEY}`, {
+        const response = await fetch(`${TEXT_TO_SPEECH_API_URL}?key=${API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
-            console.error("API response not OK:", response.status, response.statusText);
-            throw new Error("API request failed.");
+            console.error("TTS API response not OK:", response.status, response.statusText);
+            throw new Error("TTS API request failed.");
         }
 
         const result = await response.json();
-        const candidate = result.candidates?.[0];
+        const part = result?.candidates?.[0]?.content?.parts?.[0];
+        const audioData = part?.inlineData?.data;
+        const mimeType = part?.inlineData?.mimeType;
 
-        if (!candidate) {
-            console.error("No valid candidate found in API response.");
-            throw new Error("No valid candidate found.");
-        }
-
-        // Find and display the text part
-        const textPart = candidate.content.parts.find(p => p.text);
-        if (textPart) {
-            addMessage(textPart.text, "ai");
-            updateButtonText("Generating Voice...");
-        }
-
-        // Find and play the audio part
-        const audioPart = candidate.content.parts.find(p => p.inlineData);
-        if (audioPart) {
-            const audioData = audioPart.inlineData.data;
-            const mimeType = audioPart.inlineData.mimeType;
-
+        if (audioData && mimeType && mimeType.startsWith("audio/")) {
             const sampleRate = parseInt(mimeType.match(/rate=(\d+)/)[1], 10);
             const pcmData = base64ToArrayBuffer(audioData);
             const wavBlob = pcmToWav(pcmData, sampleRate);
@@ -217,9 +247,8 @@ async function getAIResponseAndSpeak(prompt) {
             console.error("Invalid audio data from API.");
             throw new Error("Invalid audio data from API.");
         }
-
     } catch (error) {
-        console.error("Failed to get AI response and speak:", error);
+        console.error("Failed to speak response:", error);
         stopLesson();
         addMessage("Sorry, I'm having trouble with my voice right now. Please try again later.", "ai");
         resetUI();
@@ -272,7 +301,15 @@ function startSpeechRecognition() {
             addMessage(finalTranscript, "user");
             toggleButtonState("loading");
             updateButtonText("Processing...");
-            await getAIResponseAndSpeak(finalTranscript);
+            const aiResponseText = await getAIResponse(finalTranscript);
+            if (aiResponseText) {
+                addMessage(aiResponseText, "ai");
+                updateButtonText("Generating Voice...");
+                await speakResponse(aiResponseText);
+            } else {
+                addMessage("I'm sorry, I couldn't understand that. Can you please try again?", "ai");
+                await speakResponse("I'm sorry, I couldn't understand that. Can you please try again?");
+            }
         } else {
             // Restart recognition if nothing was said
             if (lessonState === "listening") {
@@ -301,7 +338,15 @@ document.getElementById('fallback-text-input').addEventListener('keydown', async
         e.target.value = '';
         toggleButtonState("loading");
         updateButtonText("Processing...");
-        await getAIResponseAndSpeak(text);
+        const aiResponseText = await getAIResponse(text);
+        if (aiResponseText) {
+            addMessage(aiResponseText, "ai");
+            updateButtonText("Generating Voice...");
+            await speakResponse(aiResponseText);
+        } else {
+            addMessage("I'm sorry, I couldn't understand that. Can you please try again?", "ai");
+            await speakResponse("I'm sorry, I couldn't understand that. Can you please try again?");
+        }
     }
 });
 
@@ -311,3 +356,4 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initial UI setup on page load
     resetUI();
 });
+
