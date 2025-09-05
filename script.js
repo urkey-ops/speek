@@ -23,12 +23,14 @@ const fallbackInput = document.getElementById("fallback-text-input");
 const AI_VOICE_NAME = "Puck";
 const INITIAL_PROMPT = "Hello there. Let's practice speaking with confidence. How are you today?";
 const MAX_RETRIES = 3;
+const MAX_RECOGNITION_RETRIES = 5;
 
 // State
 let lessonState = "initial"; // "initial", "listening", "speaking", "paused"
 let recognition = null;
 let currentAudio = null;
 let recognitionStopFlag = false;
+let recognitionRetryCount = 0;
 
 // Build URL
 function buildApiUrl(modelName) {
@@ -163,6 +165,11 @@ async function startLesson() {
             startSpeechRecognition();
         };
         currentAudio.onpause = () => URL.revokeObjectURL(audioUrl);
+        currentAudio.onerror = (e) => {
+            console.error("Audio playback error:", e);
+            addMessage("⚠️ There was an issue playing the audio. Please try again.", "ai");
+            resetUI();
+        };
 
     } catch (err) {
         console.error("Lesson start failed:", err);
@@ -188,6 +195,7 @@ function stopLesson() {
 function startSpeechRecognition() {
     lessonState = "listening";
     recognitionStopFlag = false;
+    recognitionRetryCount = 0;
     updateButtonText("Listening...");
     showCancelButton(true);
     actionButton.classList.add("pulse-animate");
@@ -227,7 +235,15 @@ function startSpeechRecognition() {
             interimResults.textContent = "";
             actionButton.classList.remove("pulse-animate");
             if (lessonState === "listening" && !recognitionStopFlag) {
-                setTimeout(() => recognition.start(), 600);
+                recognitionRetryCount++;
+                if (recognitionRetryCount < MAX_RECOGNITION_RETRIES) {
+                    setTimeout(() => recognition.start(), 600);
+                } else {
+                    addMessage("⚠️ It seems my voice input is having trouble. Please try using the keyboard for now.", "ai");
+                    interimResults.textContent = "";
+                    recognitionStopFlag = true;
+                    stopLesson();
+                }
             }
         };
 
@@ -264,6 +280,11 @@ async function processUserSpeech(finalTranscript) {
             startSpeechRecognition();
         };
         currentAudio.onpause = () => URL.revokeObjectURL(audioUrl);
+        currentAudio.onerror = (e) => {
+            console.error("Audio playback error:", e);
+            addMessage("⚠️ There was an issue playing the audio. Please try again.", "ai");
+            resetUI();
+        };
 
     } catch (err) {
         console.error("Processing user speech failed:", err);
