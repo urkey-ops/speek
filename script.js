@@ -6,92 +6,62 @@ const API_KEY = "AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI";
 
 
 
-// API endpoints for different Gemini models
+// API endpoints
 const API_URL_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
-const TEXT_GENERATION_MODEL = "gemini-1.5-flash:generateContent";
-const TEXT_TO_SPEECH_MODEL = "gemini-2.5-flash-preview-tts:generateContent";
+const TEXT_AUDIO_MODEL = "gemini-2.5-flash-preview-tts:generateContent";
 
-// DOM element selectors
+// DOM selectors
 const actionButton = document.getElementById("action-button");
 const buttonContent = document.getElementById("button-content");
 const loadingSpinner = document.getElementById("loading-spinner");
 const chatHistory = document.getElementById("chat-history");
 const interimResults = document.getElementById("interim-results");
 const cancelButton = document.getElementById("cancel-button");
+const fallbackInput = document.getElementById("fallback-text-input");
 
 // Constants
 const AI_VOICE_NAME = "Puck";
 const INITIAL_PROMPT = "Hello there. Let's practice speaking with confidence. How are you today?";
 const MAX_RETRIES = 3;
 
-// State variables
+// State
 let lessonState = "initial"; // "initial", "listening", "speaking", "paused"
 let recognition = null;
-let currentAudio = null; // Reusable Audio object for iOS compatibility
+let currentAudio = null;
+let recognitionStopFlag = false;
 
-// Function to build API URLs consistently
+// Build URL
 function buildApiUrl(modelName) {
     return `${API_URL_BASE}${modelName}?key=${API_KEY}`;
 }
 
-// Reusable function to fetch with exponential backoff
+// Fetch with retry
 async function fetchWithRetry(url, options, retries = MAX_RETRIES) {
     try {
         const response = await fetch(url, options);
-
         if (!response.ok) {
-            const errorBody = await response.json();
+            const errorBody = await response.json().catch(() => ({}));
             console.error("API response not OK:", response.status, response.statusText, errorBody);
-
             if (retries > 0 && (response.status === 429 || response.status >= 500)) {
                 const delay = (MAX_RETRIES - retries) * 1000;
-                await new Promise(resolve => setTimeout(resolve, delay));
+                await new Promise(r => setTimeout(r, delay));
                 return fetchWithRetry(url, options, retries - 1);
             }
-            throw new Error(`API request failed with status: ${response.status}`);
+            throw new Error(`API request failed with status ${response.status}`);
         }
         return response;
     } catch (error) {
         console.error("Fetch failed:", error);
         if (retries > 0) {
             const delay = (MAX_RETRIES - retries) * 1000;
-            await new Promise(resolve => setTimeout(resolve, delay));
+            await new Promise(r => setTimeout(r, delay));
             return fetchWithRetry(url, options, retries - 1);
         }
         throw error;
     }
 }
 
-// Event listener for the main action button
-actionButton.addEventListener("click", () => {
-    // On the very first click, initialize the Audio object to satisfy iOS autoplay policy
-    if (!currentAudio) {
-        currentAudio = new Audio();
-    }
-
-    switch (lessonState) {
-        case "initial":
-            startLesson();
-            break;
-        case "listening":
-            stopLesson();
-            break;
-        case "speaking":
-            // The button will be disabled, so this case shouldn't be reached
-            break;
-        case "paused":
-            // Handle restart or resume logic if needed
-            break;
-    }
-});
-
-// Event listener for the cancel button
-cancelButton.addEventListener("click", () => {
-    stopLesson();
-    resetUI();
-});
-
-// Functions to manage the UI state
+// UI helpers
 function toggleButtonState(state) {
     if (state === "loading") {
         buttonContent.classList.add("hidden");
@@ -104,278 +74,234 @@ function toggleButtonState(state) {
         actionButton.disabled = false;
     }
 }
-
-function updateButtonText(text) {
-    buttonContent.textContent = text;
-}
-
-function showCancelButton(show) {
-    cancelButton.classList.toggle("hidden", !show);
-}
-
+function updateButtonText(text) { buttonContent.textContent = text; }
+function showCancelButton(show) { cancelButton.classList.toggle("hidden", !show); }
 function resetUI() {
     lessonState = "initial";
+    recognitionStopFlag = true;
     updateButtonText("Start Lesson");
     showCancelButton(false);
     actionButton.classList.remove("pulse-animate");
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.removeAttribute("src");
+    }
 }
 
-// Function to add a new message to the chat history
+// Chat history
 function addMessage(text, sender) {
-    const messageElement = document.createElement("div");
-    messageElement.classList.add("message", sender === "ai" ? "ai-message" : "user-message");
-    messageElement.textContent = text;
-    chatHistory.appendChild(messageElement);
+    const msg = document.createElement("div");
+    msg.classList.add("message", sender === "ai" ? "ai-message" : "user-message");
+    msg.textContent = text;
+    chatHistory.appendChild(msg);
     chatHistory.scrollTop = chatHistory.scrollHeight;
 }
 
-// Function to handle the start of the lesson
+// Base64 decoder (optimized)
+function base64ToArrayBuffer(base64) {
+    return Uint8Array.from(atob(base64), c => c.charCodeAt(0)).buffer;
+}
+
+// Unified AI call (text + audio)
+async function getTextAndAudio(prompt) {
+    try {
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+                responseModalities: ["TEXT", "AUDIO"],
+                speechConfig: {
+                    voiceConfig: { prebuiltVoiceConfig: { voiceName: AI_VOICE_NAME } }
+                }
+            }
+        };
+
+        const response = await fetchWithRetry(buildApiUrl(TEXT_AUDIO_MODEL), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        const parts = result?.candidates?.[0]?.content?.parts || [];
+
+        let text = null, audioUrl = null;
+        for (const p of parts) {
+            if (p.text) text = p.text;
+            if (p.inlineData?.data && p.inlineData?.mimeType?.startsWith("audio/")) {
+                const audioBlob = new Blob([base64ToArrayBuffer(p.inlineData.data)], {
+                    type: p.inlineData.mimeType
+                });
+                audioUrl = URL.createObjectURL(audioBlob);
+            }
+        }
+        return { text, audioUrl };
+    } catch (err) {
+        console.error("Unified AI call failed:", err);
+        throw err;
+    }
+}
+
+// Start lesson
 async function startLesson() {
     lessonState = "speaking";
     toggleButtonState("loading");
     updateButtonText("Loading...");
     showCancelButton(true);
 
-    // Get the text first
-    const aiResponseText = await getAIResponse(INITIAL_PROMPT);
+    try {
+        const { text, audioUrl } = await getTextAndAudio(INITIAL_PROMPT);
+        if (!text || !audioUrl) throw new Error("Incomplete AI response");
 
-    if (aiResponseText) {
-        // Immediately add the text to the chat
-        addMessage(aiResponseText, "ai");
-        updateButtonText("Generating Voice...");
-        // Then get and play the audio
-        await speakResponse(aiResponseText);
-    } else {
-        // This path is taken if the first text generation API call fails
+        addMessage(text, "ai");
+        updateButtonText("Playing Voice...");
+
+        currentAudio.src = audioUrl;
+        currentAudio.play();
+
+        currentAudio.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            startSpeechRecognition();
+        };
+        currentAudio.onpause = () => URL.revokeObjectURL(audioUrl);
+
+    } catch (err) {
+        console.error("Lesson start failed:", err);
+        addMessage("⚠️ Could not start lesson. Check your connection or API settings.", "ai");
         resetUI();
-        addMessage("Sorry, I'm having trouble with my voice right now. Please try again later.", "ai");
     }
 }
 
-// Function to handle the end of the lesson
+// Stop lesson
 function stopLesson() {
-    if (recognition) {
-        recognition.stop();
-    }
+    recognitionStopFlag = true;
+    if (recognition) recognition.stop();
     if (currentAudio) {
         currentAudio.pause();
+        currentAudio.removeAttribute("src");
     }
     lessonState = "paused";
     toggleButtonState("idle");
     actionButton.classList.remove("pulse-animate");
 }
 
-// Function to send a request to the Gemini Generative model for text only
-async function getAIResponse(prompt) {
-    try {
-        const payload = {
-            contents: [{
-                parts: [{ text: prompt }]
-            }],
-        };
-
-        const response = await fetchWithRetry(buildApiUrl(TEXT_GENERATION_MODEL), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-        const candidate = result.candidates?.[0];
-
-        if (candidate && candidate.content?.parts?.[0]?.text) {
-            return candidate.content.parts[0].text;
-        } else {
-            console.error("No valid text found in text generation API response.");
-            return null;
-        }
-    } catch (error) {
-        console.error("Failed to fetch AI text response:", error);
-        return null;
-    }
-}
-
-// Function to convert base64 to ArrayBuffer
-function base64ToArrayBuffer(base64) {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes.buffer;
-}
-
-// Function to generate and play TTS audio
-async function speakResponse(text) {
-    try {
-        const payload = {
-            contents: [{
-                parts: [{ text: text }]
-            }],
-            generationConfig: {
-                responseModalities: ["AUDIO"],
-                speechConfig: {
-                    voiceConfig: {
-                        prebuiltVoiceConfig: { voiceName: AI_VOICE_NAME }
-                    }
-                }
-            },
-        };
-
-        const response = await fetchWithRetry(buildApiUrl(TEXT_TO_SPEECH_MODEL), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-        const part = result?.candidates?.[0]?.content?.parts?.[0];
-        const audioData = part?.inlineData?.data;
-        const mimeType = part?.inlineData?.mimeType;
-
-        if (audioData && mimeType && mimeType.startsWith("audio/")) {
-            // Correctly handle the pre-encoded audio from the API
-            const audioBlob = new Blob([base64ToArrayBuffer(audioData)], { type: mimeType });
-            const audioUrl = URL.createObjectURL(audioBlob);
-
-            // Re-use the existing Audio object and set its source
-            currentAudio.src = audioUrl;
-            currentAudio.play();
-            
-            // Revoke the object URL on both ended and pause to prevent memory leaks
-            const cleanup = () => {
-                URL.revokeObjectURL(audioUrl);
-            };
-            currentAudio.onended = () => {
-                cleanup();
-                startSpeechRecognition();
-            };
-            currentAudio.onpause = cleanup;
-
-        } else {
-            console.error("Invalid audio data from TTS API.");
-            throw new Error("Invalid audio data from API.");
-        }
-    } catch (error) {
-        console.error("Failed to speak response:", error);
-        stopLesson();
-        addMessage("There was an error generating my voice. Please check your network and try again.", "ai");
-        resetUI();
-    }
-}
-
-// Function to start Speech Recognition
+// Speech recognition
 function startSpeechRecognition() {
     lessonState = "listening";
+    recognitionStopFlag = false;
     updateButtonText("Listening...");
     showCancelButton(true);
     actionButton.classList.add("pulse-animate");
 
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        addMessage("Your browser does not support voice input. Please use the keyboard to type.", "ai");
-        // Fallback to text input if Speech Recognition is not available
-        document.getElementById("fallback-text-input").classList.remove("hidden");
-        document.getElementById("fallback-text-input").focus();
-        updateButtonText("Speak (Not Supported)");
+    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+        addMessage("🎤 Voice input not supported. Please type instead.", "ai");
+        fallbackInput.classList.remove("hidden");
+        fallbackInput.focus();
+        updateButtonText("Voice (Unavailable)");
         return;
     }
 
-    // Reuse the recognition instance if it already exists
     if (!recognition) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
-        recognition.lang = 'en-US';
+        recognition.lang = "en-US";
         recognition.interimResults = true;
         recognition.continuous = true;
 
-        recognition.onstart = () => {
-            interimResults.textContent = "Listening...";
-        };
+        recognition.onstart = () => { interimResults.textContent = "Listening..."; };
 
-        recognition.onresult = (event) => {
-            let interimTranscript = '';
-            let finalTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalTranscript += transcript + ' ';
-                } else {
-                    interimTranscript += transcript;
-                }
+        recognition.onresult = e => {
+            let interim = "", final = "";
+            for (let i = e.resultIndex; i < e.results.length; ++i) {
+                const t = e.results[i][0].transcript;
+                if (e.results[i].isFinal) final += t + " ";
+                else interim += t;
             }
-            interimResults.textContent = interimTranscript;
-
-            if (finalTranscript.trim().length > 0) {
-                recognition.stop(); // Stop listening once a final result is received
-                processUserSpeech(finalTranscript);
+            interimResults.textContent = interim;
+            if (final.trim()) {
+                recognition.stop();
+                processUserSpeech(final.trim());
             }
         };
 
         recognition.onend = () => {
             interimResults.textContent = "";
             actionButton.classList.remove("pulse-animate");
-            // Automatically restart if not in a paused state, but with a slight delay
-            if (lessonState === "listening") {
-                setTimeout(() => {
-                    recognition.start();
-                }, 500);
+            if (lessonState === "listening" && !recognitionStopFlag) {
+                setTimeout(() => recognition.start(), 600);
             }
         };
 
-        recognition.onerror = (event) => {
-            console.error("Speech recognition error:", event.error);
-            if (event.error === 'network' || event.error === 'service-not-allowed') {
-                interimResults.textContent = "Network error. Please check your connection.";
-            }
+        recognition.onerror = e => {
+            console.error("Speech recognition error:", e.error);
+            let msg = "⚠️ Speech recognition error.";
+            if (e.error === "network") msg = "⚠️ Network issue. Please check your connection.";
+            if (e.error === "not-allowed") msg = "⚠️ Mic access blocked. Please allow microphone use.";
+            addMessage(msg, "ai");
             stopLesson();
         };
     }
-    
-    // Start listening
     recognition.start();
 }
 
-// Process the final transcript from the user
+// Handle user speech
 async function processUserSpeech(finalTranscript) {
     addMessage(finalTranscript, "user");
     toggleButtonState("loading");
     updateButtonText("Processing...");
-    const aiResponseText = await getAIResponse(finalTranscript);
-    if (aiResponseText) {
-        addMessage(aiResponseText, "ai");
-        updateButtonText("Generating Voice...");
-        await speakResponse(aiResponseText);
-    } else {
-        addMessage("I'm sorry, I couldn't understand that. Can you please try again?", "ai");
-        await speakResponse("I'm sorry, I couldn't understand that. Can you please try again?");
+
+    try {
+        const { text, audioUrl } = await getTextAndAudio(finalTranscript);
+        if (!text || !audioUrl) throw new Error("Incomplete AI response");
+
+        addMessage(text, "ai");
+        updateButtonText("Playing Voice...");
+
+        currentAudio.src = audioUrl;
+        currentAudio.play();
+
+        currentAudio.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            startSpeechRecognition();
+        };
+        currentAudio.onpause = () => URL.revokeObjectURL(audioUrl);
+
+    } catch (err) {
+        console.error("Processing user speech failed:", err);
+        addMessage("⚠️ I couldn't process that. Please try again.", "ai");
+        resetUI();
     }
 }
 
-// Fallback for text input submission if Speech Recognition isn't available
-document.getElementById('fallback-text-input').addEventListener('keydown', async (e) => {
-    if (e.key === 'Enter') {
-        const text = e.target.value;
-        if (text.trim() === '') return;
-        addMessage(text, 'user');
-        e.target.value = '';
+// Fallback text input
+fallbackInput.addEventListener("keydown", async e => {
+    if (e.key === "Enter") {
+        const text = e.target.value.trim();
+        if (!text) return;
+        addMessage(text, "user");
+        e.target.value = "";
         toggleButtonState("loading");
         updateButtonText("Processing...");
-        const aiResponseText = await getAIResponse(text);
-        if (aiResponseText) {
-            addMessage(aiResponseText, "ai");
-            updateButtonText("Generating Voice...");
-            await speakResponse(aiResponseText);
-        } else {
-            addMessage("I'm sorry, I couldn't understand that. Can you please try again?", "ai");
-            await speakResponse("I'm sorry, I couldn't understand that. Can you please try again?");
-        }
+        await processUserSpeech(text);
     }
 });
 
+// Action button
+actionButton.addEventListener("click", () => {
+    if (!currentAudio) currentAudio = new Audio();
+    switch (lessonState) {
+        case "initial": startLesson(); break;
+        case "listening": stopLesson(); break;
+        case "speaking": break; // ignore
+        case "paused": startLesson(); break;
+    }
+});
 
-// Ensure the script runs after the DOM is fully loaded
-document.addEventListener("DOMContentLoaded", () => {
-    // Initial UI setup on page load
+// Cancel button
+cancelButton.addEventListener("click", () => {
+    stopLesson();
     resetUI();
 });
+
+// Init
+document.addEventListener("DOMContentLoaded", resetUI);
+
