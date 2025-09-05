@@ -104,6 +104,7 @@ async function startLesson() {
         // Then get and play the audio
         await speakResponse(aiResponseText);
     } else {
+        // This path is taken if the first text generation API call fails
         resetUI();
         addMessage("Sorry, I'm having trouble with my voice right now. Please try again later.", "ai");
     }
@@ -137,8 +138,10 @@ async function getAIResponse(prompt) {
             body: JSON.stringify(payload)
         });
 
+        // Add a detailed log if the response is not OK
         if (!response.ok) {
-            console.error("API response not OK:", response.status, response.statusText);
+            const errorBody = await response.json();
+            console.error("Text Generation API response not OK:", response.status, response.statusText, errorBody);
             return null;
         }
 
@@ -147,11 +150,11 @@ async function getAIResponse(prompt) {
         if (candidate && candidate.content?.parts?.[0]?.text) {
             return candidate.content.parts[0].text;
         } else {
-            console.error("No valid text found in API response.");
+            console.error("No valid text found in text generation API response.");
             return null;
         }
     } catch (error) {
-        console.error("Failed to fetch AI response:", error);
+        console.error("Failed to fetch AI text response:", error);
         return null;
     }
 }
@@ -226,8 +229,10 @@ async function speakResponse(text) {
             body: JSON.stringify(payload)
         });
 
+        // Add a detailed log if the response is not OK
         if (!response.ok) {
-            console.error("TTS API response not OK:", response.status, response.statusText);
+            const errorBody = await response.json();
+            console.error("TTS API response not OK:", response.status, response.statusText, errorBody);
             throw new Error("TTS API request failed.");
         }
 
@@ -247,7 +252,7 @@ async function speakResponse(text) {
                 startSpeechRecognition();
             };
         } else {
-            console.error("Invalid audio data from API.");
+            console.error("Invalid audio data from TTS API.");
             throw new Error("Invalid audio data from API.");
         }
     } catch (error) {
@@ -361,4 +366,5 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initial UI setup on page load
     resetUI();
 });
+
 
