@@ -52,6 +52,7 @@ function toggleButtonState(state) {
         buttonContent.classList.add("hidden");
         loadingSpinner.classList.remove("hidden");
         actionButton.disabled = true;
+        actionButton.classList.remove("pulse-animate");
     } else {
         buttonContent.classList.remove("hidden");
         loadingSpinner.classList.add("hidden");
@@ -71,6 +72,7 @@ function resetUI() {
     lessonState = "initial";
     updateButtonText("Start Lesson");
     showCancelButton(false);
+    actionButton.classList.remove("pulse-animate");
 }
 
 // Function to add a new message to the chat history
@@ -89,8 +91,8 @@ async function startLesson() {
     updateButtonText("Loading...");
     showCancelButton(true);
 
-    // Initial AI prompt
-    const prompt = "Please introduce yourself and a lesson on confident speaking. Respond in a cheerful tone. Keep your response short and concise, and end with a question.";
+    // Initial AI prompt for a short, fast response
+    const prompt = "Hello there. Let's practice speaking with confidence. How are you today?";
 
     // Get the text first
     const aiResponseText = await getAIResponse(prompt);
@@ -117,6 +119,7 @@ function stopLesson() {
     }
     lessonState = "paused";
     toggleButtonState("idle");
+    actionButton.classList.remove("pulse-animate");
 }
 
 // Function to send a request to the Gemini Generative model for text only
@@ -260,6 +263,7 @@ function startSpeechRecognition() {
     lessonState = "listening";
     updateButtonText("Listening...");
     showCancelButton(true);
+    actionButton.classList.add("pulse-animate");
 
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         addMessage("Speech recognition is not supported in this browser. Please use Google Chrome.", "ai");
@@ -297,6 +301,7 @@ function startSpeechRecognition() {
 
     recognition.onend = async () => {
         interimResults.textContent = "";
+        actionButton.classList.remove("pulse-animate");
         if (finalTranscript.trim().length > 0) {
             addMessage(finalTranscript, "user");
             toggleButtonState("loading");
