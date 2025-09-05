@@ -159,42 +159,6 @@ async function getAIResponse(prompt) {
     }
 }
 
-// Function to convert PCM audio data to a WAV blob
-function pcmToWav(pcmData, sampleRate) {
-    const pcm16 = new Int16Array(pcmData);
-    const buffer = new ArrayBuffer(44 + pcm16.byteLength);
-    const view = new DataView(buffer);
-    const writeString = (view, offset, str) => {
-        for (let i = 0; i < str.length; i++) {
-            view.setUint8(offset + i, str.charCodeAt(i));
-        }
-    };
-    let offset = 0;
-
-    // Write WAV header
-    writeString(view, offset, 'RIFF'); offset += 4;
-    view.setUint32(offset, 36 + pcm16.byteLength, true); offset += 4;
-    writeString(view, offset, 'WAVE'); offset += 4;
-    writeString(view, offset, 'fmt '); offset += 4;
-    view.setUint32(offset, 16, true); offset += 4; // Sub-chunk 1 size
-    view.setUint16(offset, 1, true); offset += 2; // Audio format (1 for PCM)
-    view.setUint16(offset, 1, true); offset += 2; // Number of channels
-    view.setUint32(offset, sampleRate, true); offset += 4;
-    view.setUint32(offset, sampleRate * 2, true); offset += 4; // Byte rate
-    view.setUint16(offset, 2, true); offset += 2; // Block align
-    view.setUint16(offset, 16, true); offset += 2; // Bits per sample
-    writeString(view, offset, 'data'); offset += 4;
-    view.setUint32(offset, pcm16.byteLength, true); offset += 4;
-
-    // Write PCM data
-    for (let i = 0; i < pcm16.length; i++) {
-        view.setInt16(offset, pcm16[i], true);
-        offset += 2;
-    }
-
-    return new Blob([view], { type: 'audio/wav' });
-}
-
 // Function to convert base64 to ArrayBuffer
 function base64ToArrayBuffer(base64) {
     const binaryString = atob(base64);
@@ -242,10 +206,9 @@ async function speakResponse(text) {
         const mimeType = part?.inlineData?.mimeType;
 
         if (audioData && mimeType && mimeType.startsWith("audio/")) {
-            const sampleRate = parseInt(mimeType.match(/rate=(\d+)/)[1], 10);
-            const pcmData = base64ToArrayBuffer(audioData);
-            const wavBlob = pcmToWav(pcmData, sampleRate);
-            const audioUrl = URL.createObjectURL(wavBlob);
+            // Correctly handle the pre-encoded audio from the API
+            const audioBlob = new Blob([base64ToArrayBuffer(audioData)], { type: mimeType });
+            const audioUrl = URL.createObjectURL(audioBlob);
             currentAudio = new Audio(audioUrl);
             currentAudio.play();
             currentAudio.onended = () => {
@@ -366,5 +329,4 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initial UI setup on page load
     resetUI();
 });
-
 
