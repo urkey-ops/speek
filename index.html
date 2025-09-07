@@ -4,44 +4,51 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sentence Builder</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap"
     rel="stylesheet"
   />
+  <!-- Custom CSS -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="p-4 sm:p-8">
   <main class="container mx-auto bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center">
+    <!-- Header -->
     <header class="flex flex-col items-center mb-4">
       <h1 class="text-4xl sm:text-5xl font-extrabold text-center text-rose-500 mb-2 flex items-center justify-center">
         <span id="theme-icon" class="mr-3 text-3xl" aria-hidden="true">🎉</span>
         Sentence Builder!
       </h1>
-      <p id="instruction-text" class="text-lg sm:text-xl text-gray-700 text-center mb-4"></p>
+      <p id="instruction-text" class="text-xl sm:text-2xl text-center text-gray-600 mb-8 font-bold">
+        Let's build a sentence!
+      </p>
     </header>
 
-    <section id="sentence-section" class="w-full mb-8">
-      <div id="sentence-words-container" class="min-h-[8rem] flex flex-wrap items-center justify-center gap-4 bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-200">
-        <div id="placeholder" class="text-gray-400 italic">Start building your sentence here!</div>
+    <!-- Sentence Display Area -->
+    <section id="sentence-area" class="min-h-[10rem] w-full bg-gray-100 rounded-2xl p-6 sm:p-8 flex flex-wrap items-center content-center justify-center text-center shadow-inner mb-6 transition-all duration-300">
+      <span class="text-xl sm:text-2xl text-gray-400">Let's build a sentence!</span>
+    </section>
+
+    <!-- Word Bank and Punctuation -->
+    <section class="flex flex-col items-center w-full">
+      <div id="word-bank-message-box" class="message-box w-full mb-4"></div>
+      <div id="dynamic-word-bank" class="word-bank-container w-full p-4 rounded-xl mb-4 bg-gray-50 flex flex-wrap justify-center gap-2 sm:gap-4 shadow-inner">
+        <div id="word-buttons-container" class="flex flex-wrap justify-center gap-2 sm:gap-4">
+          <!-- Word buttons will be rendered here by JS -->
+        </div>
+      </div>
+      <div id="punctuation-buttons" class="flex justify-center gap-4 mt-4">
+        <button id="exclamation-btn" class="base-button punctuation-button disabled-btn active:scale-105 active:shadow-lg" disabled>!</button>
+        <button id="question-btn" class="base-button punctuation-button disabled-btn active:scale-105 active:shadow-lg" disabled>?</button>
       </div>
     </section>
-
-    <section id="word-bank-section" class="w-full">
-      <div id="word-buttons-container" class="word-bank-container flex flex-wrap items-center justify-center gap-2 p-4 bg-gray-50 rounded-xl shadow-inner border border-gray-200">
-        </div>
-    </section>
     
-    <section id="gemini-key-section" class="mt-8 p-4 bg-gray-100 rounded-lg text-sm text-gray-600">
-      <p>
-        <strong>⚠️ IMPORTANT:</strong> The Gemini API key is managed in <code>script.js</code>.
-        For production, it is highly recommended to use a server-side proxy
-        to protect your key and prevent unauthorized use.
-      </p>
-    </section>
-
+    <!-- Action Buttons -->
     <section id="action-buttons-section" class="flex flex-col items-center justify-center gap-6 w-full mt-8">
       <div class="flex flex-wrap justify-center gap-4 w-full">
         <button id="go-back-btn" class="base-button action-button bg-orange-500 hover:bg-orange-600 text-white shadow-lg active:scale-105 active:shadow-lg">Go Back</button>
@@ -55,10 +62,15 @@
     </section>
     
     <section id="high-five-section" class="flex items-center justify-center w-full mt-8">
-        <button id="high-five-btn" class="base-button action-button bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg active:scale-105 active:shadow-lg">High Five!</button>
+        <button id="high-five-btn" class="base-button high-five-btn">
+            High Five!
+        </button>
     </section>
     
-    <div id="message-box" class="fixed bottom-4 left-1/2 -translate-x-1/2 p-4 rounded-lg shadow-xl text-center z-50 transition-all duration-300 transform scale-95 opacity-0 pointer-events-none"></div>
+    <!-- Sentence Counter -->
+    <section class="mt-8 text-center text-gray-600">
+        <p class="text-lg">Sentences Built: <span id="sentences-built-counter" class="font-bold">0</span></p>
+    </section>
 
   </main>
 
