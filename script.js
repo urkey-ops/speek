@@ -239,10 +239,11 @@ class SentenceBuilder {
         const themeWords = this.constants.wordCollections[this.state.currentTheme.name];
 
         possibleTypes.forEach(type => {
+            if (this.constants.allWords[type]) {
+                words.push(...this.constants.allWords[type].filter(w => !w.theme));
+            }
             if (themeWords[type]) {
                 words.push(...themeWords[type]);
-            } else if (this.constants.allWords[type]) {
-                words.push(...this.constants.allWords[type].filter(w => !w.theme));
             }
         });
 
