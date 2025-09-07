@@ -2,9 +2,12 @@
 // ⚠️ IMPORTANT: Replace 'YOUR_GEMINI_API_KEY' with your actual key.
 const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
+// A helpful constant to make your API key easily accessible and visible.
+// ⚠️ IMPORTANT: Replace 'YOUR_GEMINI_API_KEY' with your actual key.
+//const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
+
 // ⚠️ IMPORTANT: For production, do NOT store your API key in client-side code.
 // Consider using a secure backend to manage API calls.
-// const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY';
 const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
 
 // Load words.json and initialize the application
@@ -172,16 +175,15 @@ class SentenceBuilder {
         const lastType = lastWord ? lastWord.type : 'start';
         const possibleNextTypes = this.constants.nextWordRules[lastType] || [];
 
-        const wordsFromJSON = this._getWordsFromJSON(possibleNextTypes);
+        const wordsFromJSON = this._getWordsFromJSON(possibleTypes);
         this._renderWordButtons(wordsFromJSON);
 
         if (GEMINI_API_KEY !== 'YOUR_GEMINI_API_KEY') {
-            try {
-                this.elements.wordButtonsContainer.innerHTML = '<p class="text-center text-gray-500">Generating words...</p>';
+            this.elements.wordBankMsgBox.innerHTML = '<p class="text-center text-gray-500">Magic hat generating more words...</p>';
 
-                // Updated prompt with a filter to ensure age-appropriate vocabulary
+            try {
                 const prompt = `
-                    Based on the sentence fragment "${this.state.sentenceWordsArray.map(w => w.word).join(' ')}", and the available parts of speech: ${possibleNextTypes.join(', ')}, provide a list of 5 words that could come next, along with their parts of speech.
+                    Based on the sentence fragment "${this.state.sentenceWordsArray.map(w => w.word).join(' ')}", and the available parts of speech: ${possibleTypes.join(', ')}, provide a list of 5 words that could come next, along with their parts of speech.
 
                     **IMPORTANT RULES:**
                     1. All words must be simple, common, and appropriate for a 1st-grade student (ages 6-7).
@@ -213,20 +215,19 @@ class SentenceBuilder {
                     geminiWords = JSON.parse(cleanText);
                 } catch (parseErr) {
                     console.error('Failed to parse Gemini response:', parseErr);
-                    geminiWords = [];
+                    geminiWords = { words: [] };
                 }
 
                 if (currentFetchId === this.state.lastFetchId) {
-                    const allWords = this._filterAndCombineWords(wordsFromJSON, geminiWords);
+                    const allWords = this._filterAndCombineWords(wordsFromJSON, geminiWords.words);
                     this._renderWordButtons(allWords);
+                    this.elements.wordBankMsgBox.innerHTML = '';
                 }
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error('Gemini API fetch failed:', err);
                     if (currentFetchId === this.state.lastFetchId) {
-                        this.elements.wordButtonsContainer.innerHTML = '';
-                        this._renderWordButtons(wordsFromJSON);
-                        this._showMessage('Could not fetch new words from the magic hat. Using the regular word bank!', 'red');
+                        this.elements.wordBankMsgBox.innerHTML = '<p class="text-center text-red-500">Could not fetch new words from the magic hat.</p>';
                     }
                 }
             }
@@ -273,12 +274,14 @@ class SentenceBuilder {
         const allWords = [...jsonWords];
         const existingWords = new Set(jsonWords.map(w => w.word.toLowerCase()));
 
-        geminiWords.forEach(w => {
-            if (w.word && w.type && !existingWords.has(w.word.toLowerCase())) {
-                allWords.push({ ...w, isGeminiFetched: true });
-                existingWords.add(w.word.toLowerCase());
-            }
-        });
+        if (Array.isArray(geminiWords)) {
+            geminiWords.forEach(w => {
+                if (w.word && w.type && !existingWords.has(w.word.toLowerCase())) {
+                    allWords.push({ ...w, isGeminiFetched: true });
+                    existingWords.add(w.word.toLowerCase());
+                }
+            });
+        }
         return this.getRandomElements(allWords, 15);
     }
 
