@@ -1,0 +1,1000 @@
+{
+"themes": [
+{
+"name": "Animals",
+"emoji": "🦁"
+},
+{
+"name": "Food",
+"emoji": "🍕"
+},
+{
+"name": "School",
+"emoji": "🏫"
+},
+{
+"name": "Space",
+"emoji": "🚀"
+},
+{
+"name": "Weather",
+"emoji": "☀️"
+},
+{
+"name": "Sports",
+"emoji": "⚽"
+},
+{
+"name": "Music",
+"emoji": "🎶"
+}
+],
+"typeColors": {
+"noun": "bg-blue-300 text-blue-900",
+"verb": "bg-purple-300 text-purple-900",
+"adjective": "bg-lime-300 text-lime-900",
+"adverb": "bg-orange-300 text-orange-900",
+"preposition": "bg-amber-300 text-amber-900",
+"conjunction": "bg-fuchsia-300 text-fuchsia-900",
+"determiner": "bg-sky-300 text-sky-900",
+"pronoun": "bg-teal-300 text-teal-900",
+"other": "bg-gray-300 text-gray-900",
+"punctuation": "bg-zinc-700 text-white"
+},
+"grammarTips": {
+"noun": "A noun is a person, place, or thing!",
+"verb": "A verb is an action word!",
+"adjective": "An adjective describes a noun!",
+"adverb": "An adverb describes a verb or adjective!",
+"preposition": "A preposition shows position!",
+"conjunction": "A conjunction connects words or ideas!",
+"determiner": "A determiner introduces a noun!",
+"pronoun": "A pronoun takes the place of a noun!",
+"start": "Let's start with a describing word or a naming word!",
+"other": "This word helps connect other words!"
+},
+"words": {
+"noun": [
+{
+"word": "lion",
+"theme": "animals"
+},
+{
+"word": "bear",
+"theme": "animals"
+},
+{
+"word": "fish",
+"theme": "animals"
+},
+{
+"word": "dog",
+"theme": "animals"
+},
+{
+"word": "cat",
+"theme": "animals"
+},
+{
+"word": "apple",
+"theme": "food"
+},
+{
+"word": "pizza",
+"theme": "food"
+},
+{
+"word": "cake",
+"theme": "food"
+},
+{
+"word": "cookies",
+"theme": "food"
+},
+{
+"word": "cheese",
+"theme": "food"
+},
+{
+"word": "teacher",
+"theme": "school"
+},
+{
+"word": "book",
+"theme": "school"
+},
+{
+"word": "pen",
+"theme": "school"
+},
+{
+"word": "paper",
+"theme": "school"
+},
+{
+"word": "star",
+"theme": "space"
+},
+{
+"word": "planet",
+"theme": "space"
+},
+{
+"word": "moon",
+"theme": "space"
+},
+{
+"word": "rocket",
+"theme": "space"
+},
+{
+"word": "house",
+"theme": null
+},
+{
+"word": "car",
+"theme": null
+},
+{
+"word": "tree",
+"theme": null
+},
+{
+"word": "bird",
+"theme": "animals"
+},
+{
+"word": "mouse",
+"theme": "animals"
+},
+{
+"word": "grapes",
+"theme": "food"
+},
+{
+"word": "cookie",
+"theme": "food"
+},
+{
+"word": "friend",
+"theme": "school"
+},
+{
+"word": "pencil",
+"theme": "school"
+},
+{
+"word": "chair",
+"theme": "school"
+},
+{
+"word": "sun",
+"theme": "space"
+},
+{
+"word": "satellite",
+"theme": "space"
+},
+{
+"word": "football",
+"theme": "sports"
+},
+{
+"word": "basketball",
+"theme": "sports"
+},
+{
+"word": "player",
+"theme": "sports"
+},
+{
+"word": "song",
+"theme": "music"
+},
+{
+"word": "guitar",
+"theme": "music"
+},
+{
+"word": "piano",
+"theme": "music"
+},
+{
+"word": "bee",
+"theme": "animals"
+},
+{
+"word": "chick",
+"theme": "animals"
+},
+{
+"word": "chicken",
+"theme": "animals"
+},
+{
+"word": "cow",
+"theme": "animals"
+},
+{
+"word": "deer",
+"theme": "animals"
+},
+{
+"word": "duck",
+"theme": "animals"
+},
+{
+"word": "frog",
+"theme": "animals"
+},
+{
+"word": "goat",
+"theme": "animals"
+},
+{
+"word": "goose",
+"theme": "animals"
+},
+{
+"word": "hen",
+"theme": "animals"
+},
+{
+"word": "horse",
+"theme": "animals"
+},
+{
+"word": "kitten",
+"theme": "animals"
+},
+{
+"word": "lamb",
+"theme": "animals"
+},
+{
+"word": "monkey",
+"theme": "animals"
+},
+{
+"word": "pig",
+"theme": "animals"
+},
+{
+"word": "rabbit",
+"theme": "animals"
+},
+{
+"word": "sheep",
+"theme": "animals"
+},
+{
+"word": "snake",
+"theme": "animals"
+},
+{
+"word": "squirrel",
+"theme": "animals"
+},
+{
+"word": "tiger",
+"theme": "animals"
+},
+{
+"word": "turtle",
+"theme": "animals"
+},
+{
+"word": "worm",
+"theme": "animals"
+},
+{
+"word": "zoo",
+"theme": "animals"
+},
+{
+"word": "farm",
+"theme": "animals"
+},
+{
+"word": "pet",
+"theme": "animals"
+},
+{
+"word": "pond",
+"theme": "animals"
+},
+{
+"word": "baby",
+"theme": null
+},
+{
+"word": "boy",
+"theme": null
+},
+{
+"word": "brother",
+"theme": null
+},
+{
+"word": "child",
+"theme": null
+},
+{
+"word": "children",
+"theme": null
+},
+{
+"word": "cousin",
+"theme": null
+},
+{
+"word": "dad",
+"theme": null
+},
+{
+"word": "family",
+"theme": null
+},
+{
+"word": "father",
+"theme": null
+},
+{
+"word": "girl",
+"theme": null
+},
+{
+"word": "grandpa",
+"theme": null
+},
+{
+"word": "grandma",
+"theme": null
+},
+{
+"word": "helper",
+"theme": null
+},
+{
+"word": "hero",
+"theme": null
+},
+{
+"word": "kid",
+"theme": null
+},
+{
+"word": "king",
+"theme": null
+},
+{
+"word": "lady",
+"theme": null
+},
+{
+"word": "man",
+"theme": null
+},
+{
+"word": "mom",
+"theme": null
+},
+{
+"word": "mother",
+"theme": null
+},
+{
+"word": "neighbor",
+"theme": null
+},
+{
+
+    "word": "nurse",
+    "theme": null
+  },
+  {
+    "word": "parent",
+    "theme": null
+  },
+  {
+    "word": "people",
+    "theme": null
+  },
+  {
+    "word": "person",
+    "theme": null
+  },
+  {
+    "word": "queen",
+    "theme": null
+  },
+  {
+    "word": "sister",
+    "theme": null
+  },
+  {
+    "word": "student",
+    "theme": null
+  },
+  {
+    "word": "uncle",
+    "theme": null
+  },
+  {
+    "word": "aunt",
+    "theme": null
+  },
+  {
+    "word": "me",
+    "theme": null
+  },
+  {
+    "word": "him",
+    "theme": null
+  },
+  {
+    "word": "her",
+    "theme": null
+  },
+  {
+    "word": "us",
+    "theme": null
+  },
+  {
+    "word": "them",
+    "theme": null
+  },
+  {
+    "word": "home",
+    "theme": null
+  },
+  {
+    "word": "park",
+    "theme": null
+  },
+  {
+    "word": "store",
+    "theme": null
+  },
+  {
+    "word": "city",
+    "theme": null
+  },
+  {
+    "word": "town",
+    "theme": null
+  },
+  {
+    "word": "street",
+    "theme": null
+  },
+  {
+    "word": "country",
+    "theme": null
+  },
+  {
+    "word": "land",
+    "theme": null
+  },
+  {
+    "word": "library",
+    "theme": null
+  },
+  {
+    "word": "room",
+    "theme": null
+  },
+  {
+    "word": "yard",
+    "theme": null
+  },
+  {
+    "word": "kitchen",
+    "theme": null
+  },
+  {
+    "word": "beach",
+    "theme": null
+  },
+  {
+    "word": "forest",
+    "theme": null
+  },
+  {
+    "word": "space",
+    "theme": null
+  },
+  {
+    "word": "garden",
+    "theme": null
+  },
+  {
+    "word": "ocean",
+    "theme": null
+  },
+  {
+    "word": "corner",
+    "theme": null
+  },
+  {
+    "word": "door",
+    "theme": null
+  },
+  {
+    "word": "window",
+    "theme": null
+  },
+  {
+    "word": "ball",
+    "theme": null
+  },
+  {
+    "word": "balloon",
+    "theme": null
+  },
+  {
+    "word": "bread",
+    "theme": null
+  },
+  {
+    "word": "box",
+    "theme": null
+  },
+  {
+    "word": "coat",
+    "theme": null
+  },
+  {
+    "word": "crayon",
+    "theme": null
+  },
+  {
+    "word": "cup",
+    "theme": null
+  },
+  {
+    "word": "desk",
+    "theme": null
+  },
+  {
+    "word": "doll",
+    "theme": null
+  },
+  {
+    "word": "flag",
+    "theme": null
+  },
+  {
+    "word": "game",
+    "theme": null
+  },
+  {
+    "word": "gift",
+    "theme": null
+  },
+  {
+    "word": "hat",
+    "theme": null
+  },
+  {
+    "word": "key",
+    "theme": null
+  },
+  {
+    "word": "light",
+    "theme": null
+  },
+  {
+    "word": "moon",
+    "theme": null
+  },
+  {
+    "word": "shoe",
+    "theme": null
+  },
+  {
+    "word": "table",
+    "theme": null
+  },
+  {
+    "word": "toy",
+    "theme": null
+  },
+  {
+    "word": "truck",
+    "theme": null
+  },
+  {
+    "word": "wagon",
+    "theme": null
+  },
+  {
+    "word": "water",
+    "theme": null
+  },
+  {
+    "word": "wind",
+    "theme": null
+  },
+  {
+    "word": "bag",
+    "theme": null
+  },
+  {
+    "word": "bed",
+    "theme": null
+  },
+  {
+    "word": "blanket",
+    "theme": null
+  },
+  {
+    "word": "boat",
+    "theme": null
+  },
+  {
+    "word": "bus",
+    "theme": null
+  },
+  {
+    "word": "button",
+    "theme": null
+  },
+  {
+    "word": "camera",
+    "theme": null
+  },
+  {
+    "word": "candy",
+    "theme": null
+  },
+  {
+    "word": "cap",
+    "theme": null
+  },
+  {
+    "word": "card",
+    "theme": null
+  },
+  {
+    "word": "castle",
+    "theme": null
+  },
+  {
+    "word": "chalk",
+    "theme": null
+  },
+  {
+    "word": "cloud",
+    "theme": null
+  },
+  {
+    "word": "coin",
+    "theme": null
+  },
+  {
+    "word": "computer",
+    "theme": null
+  },
+  {
+    "word": "corn",
+    "theme": null
+  },
+  {
+    "word": "crib",
+    "theme": null
+  },
+  {
+    "word": "crown",
+    "theme": null
+  },
+  {
+    "word": "cube",
+    "theme": null
+  },
+  {
+    "word": "dish",
+    "theme": null
+  },
+  {
+    "word": "donut",
+    "theme": null
+  },
+  {
+    "word": "dress",
+    "theme": null
+  },
+  {
+    "word": "ear",
+    "theme": null
+  },
+  {
+    "word": "egg",
+    "theme": null
+  },
+  {
+    "word": "elephant",
+    "theme": null
+  },
+  {
+    "word": "fire",
+    "theme": null
+  },
+  {
+    "word": "fork",
+    "theme": null
+  },
+  {
+    "word": "ghost",
+    "theme": null
+  },
+  {
+    "word": "glue",
+    "theme": null
+  },
+  {
+    "word": "gold",
+    "theme": null
+  },
+  {
+    "word": "gum",
+    "theme": null
+  },
+  {
+    "word": "hammer",
+    "theme": null
+  },
+  {
+    "word": "hand",
+    "theme": null
+  },
+  {
+    "word": "heart",
+    "theme": null
+  },
+  {
+    "word": "jeep",
+    "theme": null
+  },
+  {
+    "word": "jug",
+    "theme": null
+  },
+  {
+    "word": "kite",
+    "theme": null
+  },
+  {
+    "word": "leaf",
+    "theme": null
+  },
+  {
+    "word": "leg",
+    "theme": null
+  },
+  {
+    "word": "letter",
+    "theme": null
+  },
+  {
+    "word": "map",
+    "theme": null
+  },
+  {
+    "word": "mask",
+    "theme": null
+  },
+  {
+    "word": "money",
+    "theme": null
+  },
+  {
+    "word": "mug",
+    "theme": null
+  },
+  {
+    "word": "nail",
+    "theme": null
+  },
+  {
+    "word": "nest",
+    "theme": null
+  },
+  {
+    "word": "nut",
+    "theme": null
+  },
+  {
+    "word": "paint",
+    "theme": null
+  },
+  {
+    "word": "pan",
+    "theme": null
+  },
+  {
+    "word": "pants",
+    "theme": null
+  },
+  {
+    "word": "party",
+    "theme": null
+  },
+  {
+    "word": "pie",
+    "theme": null
+  },
+  {
+    "word": "pig",
+    "theme": null
+  },
+  {
+    "word": "pillow",
+    "theme": null
+  },
+  {
+    "word": "plane",
+    "theme": null
+  },
+  {
+    "word": "plate",
+    "theme": null
+  },
+  {
+    "word": "robot",
+    "theme": null
+  },
+  {
+    "word": "rock",
+    "theme": null
+  },
+  {
+    "word": "rug",
+    "theme": null
+  },
+  {
+    "word": "salt",
+    "theme": null
+  },
+  {
+    "word": "saw",
+    "theme": null
+  },
+  {
+    "word": "scarf",
+    "theme": null
+  },
+  {
+    "word": "shirt",
+    "theme": null
+  },
+  {
+    "word": "slide",
+    "theme": null
+  },
+  {
+    "word": "sock",
+    "theme": null
+  },
+  {
+    "word": "spoon",
+    "theme": null
+  },
+  {
+    "word": "swing",
+    "theme": null
+  },
+  {
+    "word": "tent",
+    "theme": null
+  },
+  {
+    "word": "top",
+    "theme": null
+  },
+  {
+    "word": "train",
+    "theme": null
+  },
+  {
+    "word": "van",
+    "theme": null
+  },
+  {
+    "word": "vest",
+    "theme": null
+  },
+  {
+    "word": "wall",
+    "theme": null
+  },
+  {
+    "word": "watch",
+    "theme": null
+  },
+  {
+    "word": "wheel",
+    "theme": null
+  },
+  {
+    "word": "yam",
+    "theme": null
+  },
+  {
+    "word": "yarn",
+    "theme": null
+  },
+  {
+    "word": "zipper",
+    "theme": null
+  },
+  {
+    "word": "banana",
+    "theme": "food"
+  },
+  {
+    "word": "chicken",
+    "theme": "food"
+  },
+  {
+    "word": "chocolate",
+    "theme": "food"
+  },
+  {
+    "word": "milk",
+    "theme": "food"
+  },
+  {
+    "word": "sandwich",
+    "theme": "food"
+  },
+  {
+    "word": "snack",
+    "theme": "food"
+  },
+  {
+    "word": "soup",
+    "theme": "food"
+  },
+  {
+    "word": "sugar",
+    "theme": "food"
+  },
+  {
+    "word": "tea",
+    "theme": "food"
+  },
+  {
+    "word": "toast",
+    "theme": "food"
+  },
+  {
+    "word": "lunch",
+    "theme": "food"
+  },
+  {
+    "word": "dinner",
+    "theme": "food"
+  },
+  {
+    "word": "flower",
+    "theme": "nature"
+  },
+  {
+    "word": "plant",
+    "theme": "nature"
+  },
+  {
+    "word": "rain",
+    "theme": "nature"
+  },
+  {
+    "word": "sky",
+    "theme": "nature"
+  },
+  {
+    "word": "snow",
+    "theme": "nature"
+  },
+  {
+    "word":
