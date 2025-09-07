@@ -32,7 +32,7 @@
     "start": "Let's start with a describing word or a naming word!",
     "other": "This word helps connect other words!"
   },
-  "wordCollections": {
+  "words": {
     "noun": [
       { "word": "lion", "theme": "animals" },
       { "word": "bear", "theme": "animals" },
@@ -669,6 +669,11 @@
       { "word": "few", "theme": null },
       { "word": "a lot of", "theme": null },
       { "word": "enough", "theme": null }
+    ],
+    "punctuation": [
+      { "word": ".", "theme": null },
+      { "word": "!", "theme": null },
+      { "word": "?", "theme": null }
     ]
   },
   "nextWordRules": {
