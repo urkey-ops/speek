@@ -3,10 +3,14 @@
 const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
 
+// A helpful constant to make your API key easily accessible and visible.
+// ⚠️ IMPORTANT: Replace 'YOUR_GEMINI_API_KEY' with your actual key.
+//const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
+
 // Constant for the API endpoint URL.
 const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
 
-// Load external words data. This is the first line of defense.
+// Load external words data. ✅ FIX 1: removed leading slash in path
 fetch('words.json')
   .then(response => {
     if (!response.ok) {
@@ -20,8 +24,6 @@ fetch('words.json')
     app.init();
   })
   .catch(err => {
-    // Crucial fail-safe: if the local word bank can't load, the app doesn't start.
-    // This prevents a broken experience from the get-go.
     console.error('Failed to load words.json. Application cannot start.', err);
     document.body.innerHTML = '<div class="flex items-center justify-center h-screen"><p class="text-xl text-red-500">Error: Could not load the word bank. Please try again later.</p></div>';
   });
@@ -88,7 +90,8 @@ class SentenceBuilder {
     this.constants.themes = data.themes;
     this.constants.typeColors = data.typeColors;
     this.constants.grammarTips = data.grammarTips;
-    this.constants.wordCollections = data.wordCollections;
+    // ✅ FIX 2: use "words" instead of "wordCollections"
+    this.constants.wordCollections = data.words;
     this.constants.nextWordRules = data.nextWordRules;
     this.constants.successMessages = data.successMessages;
   }
@@ -110,9 +113,10 @@ class SentenceBuilder {
   }
 
   _selectNewTheme() {
-    const themeNames = Object.keys(this.constants.themes);
-    const randomThemeName = themeNames[Math.floor(Math.random() * themeNames.length)];
-    this.state.currentTheme = this.constants.themes[randomThemeName];
+    // ✅ FIX 3: themes is an array, not object
+    const randomIndex = Math.floor(Math.random() * this.constants.themes.length);
+    this.state.currentTheme = this.constants.themes[randomIndex];
+
     this.elements.themeIcon.textContent = this.state.currentTheme.emoji;
     this.elements.h1.innerHTML = `<span id="theme-icon" class="mr-3 text-3xl" aria-hidden="true">${this.state.currentTheme.emoji}</span>Let's build a sentence about ${this.state.currentTheme.name}!`;
     this.elements.instructionText.textContent = 'Pick a word to start your sentence!';
@@ -227,7 +231,7 @@ class SentenceBuilder {
     this.state.hasVerb = false;
     this.state.successCounter = 0;
     this.elements.sentencesCounter.textContent = this.state.successCounter;
-    this._selectNewTheme(); // Select a new theme when clearing
+    this._selectNewTheme();
     this.debouncedFetchNextWords();
     this._updateInstructionText();
     this._showMessage('Sentence cleared.', 'info');
@@ -243,7 +247,7 @@ class SentenceBuilder {
     this.state.sentenceWordsArray = [];
     this._renderSentence();
     this._updateInstructionText();
-    this._selectNewTheme(); // Select a new theme when completing
+    this._selectNewTheme();
     this.debouncedFetchNextWords();
   }
 
@@ -258,7 +262,8 @@ class SentenceBuilder {
 
     const lastWord = this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1];
     const sentenceLength = this.state.sentenceWordsArray.length;
-    const currentTheme = this.state.currentTheme.id;
+    // currentTheme is object, not id
+    const currentTheme = this.state.currentTheme.name;
 
     let possibleTypes = this.constants.nextWordRules['start'];
     if (lastWord) {
@@ -269,7 +274,6 @@ class SentenceBuilder {
       }
     }
 
-    // Determine if subject and verb are present to guide the next word type
     this.state.hasSubject = this.state.hasSubject || (lastWord && ['noun', 'pronoun'].includes(lastWord.type));
     this.state.hasVerb = this.state.hasVerb || (lastWord && lastWord.type === 'verb');
 
@@ -287,9 +291,10 @@ class SentenceBuilder {
       }
     }
 
+    // ✅ FIX 4: case-insensitive theme comparison
     const availableWords = possibleTypes.flatMap(type =>
       this.constants.wordCollections[type]
-        .filter(w => !w.theme || w.theme === currentTheme)
+        .filter(w => !w.theme || w.theme.toLowerCase() === this.state.currentTheme.name.toLowerCase())
         .map(w => ({ ...w, type, source: 'predefined' }))
     );
 
@@ -304,7 +309,7 @@ class SentenceBuilder {
       
       this._fetchWordsFromGemini(prompt, signal)
         .then(geminiWords => {
-          if (fetchId !== this.state.lastFetchId) return; // Ignore stale fetches
+          if (fetchId !== this.state.lastFetchId) return;
           const newWords = geminiWords.map(w => ({ word: w, type: randomType, isGeminiFetched: true }));
           wordsToRender = [...availableWords, ...newWords].sort(() => 0.5 - Math.random());
           this._renderWordBank(wordsToRender);
@@ -329,19 +334,19 @@ class SentenceBuilder {
     let prompt;
     switch(wordType) {
         case 'noun':
-            prompt = `Generate a JSON array of 5 simple, common nouns related to the theme of ${theme}. Each word should be a single string. Example: [\"dog\", \"cat\", \"house\"].`;
+            prompt = `Generate a JSON array of 5 simple, common nouns related to the theme of ${theme}. Each word should be a single string. Example: ["dog", "cat", "house"].`;
             break;
         case 'verb':
-            prompt = `Generate a JSON array of 5 simple, common verbs (in present tense) related to the theme of ${theme}. Each word should be a single string. Example: [\"run\", \"jump\", \"eat\"].`;
+            prompt = `Generate a JSON array of 5 simple, common verbs (in present tense) related to the theme of ${theme}. Each word should be a single string. Example: ["run", "jump", "eat"].`;
             break;
         case 'adjective':
-            prompt = `Generate a JSON array of 5 simple, common adjectives related to the theme of ${theme}. Each word should be a single string. Example: [\"happy\", \"sad\", \"big\"].`;
+            prompt = `Generate a JSON array of 5 simple, common adjectives related to the theme of ${theme}. Each word should be a single string. Example: ["happy", "sad", "big"].`;
             break;
         case 'adverb':
-            prompt = `Generate a JSON array of 5 simple, common adverbs ending in '-ly' related to the theme of ${theme}. Each word should be a single string. Example: [\"quickly\", \"slowly\", \"happily\"].`;
+            prompt = `Generate a JSON array of 5 simple, common adverbs ending in '-ly' related to the theme of ${theme}. Each word should be a single string. Example: ["quickly", "slowly", "happily"].`;
             break;
         default:
-            prompt = `Generate a JSON array of 5 simple ${wordType}s related to the theme of ${theme}. Each word should be a single string. Example: [\"word1\", \"word2\", \"word3\"].`;
+            prompt = `Generate a JSON array of 5 simple ${wordType}s related to the theme of ${theme}. Each word should be a single string. Example: ["word1", "word2", "word3"].`;
             break;
     }
     return prompt;
@@ -388,7 +393,6 @@ class SentenceBuilder {
       throw error;
     }
   }
-
 
   _readSentenceAloud() {
     const sentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
@@ -441,23 +445,11 @@ class SentenceBuilder {
     this._showMessage(message, 'info');
   }
 
-  // Utility functions
   _saveState() {
     this.state.sentenceHistory.push([...this.state.sentenceWordsArray]);
   }
 
-  /**
-   * Debounce utility function. Ensures a function is only called after a
-   * certain period of inactivity. This prevents API bombardment.
-   * @param {Function} func The function to debounce.
-   * @param {number} delay The delay in milliseconds.
-   * @returns {Function} The debounced function.
-   */
   debounce(func, delay) {
     let timeout;
-    return (...args) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func(...args), delay);
-    };
-  }
-}
+    return (...args
+
