@@ -4,7 +4,7 @@ const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
 // ⚠️ IMPORTANT: For production, do NOT store your API key in client-side code.
 // Consider using a secure backend to manage API calls.
-//const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY';
+// const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY';
 const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
 
 // Load words.json and initialize the application
@@ -158,32 +158,38 @@ class SentenceBuilder {
         this._updatePunctuationButtons();
         this._updateButtonStates();
     }
-    
-    // Core function to fetch next words from Gemini API or from JSON as a fallback.
+
     async _fetchNextWords() {
         this.state.lastFetchId++;
         const currentFetchId = this.state.lastFetchId;
-        
-        // Cancel previous pending requests
+
         if (this.state.fetchAbortController) {
             this.state.fetchAbortController.abort();
         }
         this.state.fetchAbortController = new AbortController();
-        
+
         const lastWord = this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1];
         const lastType = lastWord ? lastWord.type : 'start';
         const possibleNextTypes = this.constants.nextWordRules[lastType] || [];
-        
-        // Load words from JSON first
+
         const wordsFromJSON = this._getWordsFromJSON(possibleNextTypes);
         this._renderWordButtons(wordsFromJSON);
-        
-        // If an API key is provided, try to fetch more words
+
         if (GEMINI_API_KEY !== 'YOUR_GEMINI_API_KEY') {
             try {
                 this.elements.wordButtonsContainer.innerHTML = '<p class="text-center text-gray-500">Generating words...</p>';
-                const prompt = `Given the sentence "${this.state.sentenceWordsArray.map(w => w.word).join(' ')}", suggest a list of 5 diverse and creative words that could come next, along with their parts of speech. The words should be relevant to the theme of "${this.state.currentTheme.name}". The parts of speech should be one of: ${possibleNextTypes.join(', ')}. Respond with a JSON array of objects, each with 'word' and 'type' keys. For example: [{"word": "running", "type": "verb"}].`;
-                
+
+                // Updated prompt with a filter to ensure age-appropriate vocabulary
+                const prompt = `
+                    Based on the sentence fragment "${this.state.sentenceWordsArray.map(w => w.word).join(' ')}", and the available parts of speech: ${possibleNextTypes.join(', ')}, provide a list of 5 words that could come next, along with their parts of speech.
+
+                    **IMPORTANT RULES:**
+                    1. All words must be simple, common, and appropriate for a 1st-grade student (ages 6-7).
+                    2. Avoid complex or uncommon vocabulary.
+                    3. The words should be clear and easy to read.
+                    
+                    Format the response as a JSON object: {"words": [{"word": "word", "type": "partOfSpeech"}, ...]}`;
+
                 const requestBody = {
                     contents: [{
                         parts: [{ text: prompt }]
@@ -199,7 +205,7 @@ class SentenceBuilder {
 
                 if (!res.ok) throw new Error(`API error! status: ${res.status}`);
                 const data = await res.json();
-                
+
                 let geminiWords = [];
                 try {
                     const textResponse = data.candidates[0]?.content?.parts[0]?.text;
@@ -209,7 +215,7 @@ class SentenceBuilder {
                     console.error('Failed to parse Gemini response:', parseErr);
                     geminiWords = [];
                 }
-                
+
                 if (currentFetchId === this.state.lastFetchId) {
                     const allWords = this._filterAndCombineWords(wordsFromJSON, geminiWords);
                     this._renderWordButtons(allWords);
@@ -230,7 +236,7 @@ class SentenceBuilder {
     _getWordsFromJSON(possibleTypes) {
         const words = [];
         const themeWords = this.constants.wordCollections[this.state.currentTheme.name];
-        
+
         possibleTypes.forEach(type => {
             if (themeWords[type]) {
                 words.push(...themeWords[type]);
@@ -238,10 +244,9 @@ class SentenceBuilder {
                 words.push(...this.constants.allWords[type].filter(w => !w.theme));
             }
         });
-        
-        // Remove duplicates and select a random subset
+
         const uniqueWords = [...new Set(words.map(w => w.word))].map(w => words.find(obj => obj.word === w));
-        return this.getRandomElements(uniqueWords, 10); // get 10 random words
+        return this.getRandomElements(uniqueWords, 10);
     }
 
     _renderWordButtons(words) {
@@ -276,8 +281,7 @@ class SentenceBuilder {
         });
         return this.getRandomElements(allWords, 15);
     }
-    
-    // ... (All other class methods)
+
     debounce(func, delay) {
         let timeoutId;
         return function(...args) {
@@ -288,12 +292,12 @@ class SentenceBuilder {
             }, delay);
         };
     }
+
     getRandomElements(arr, num) {
         const shuffled = [...arr].sort(() => 0.5 - Math.random());
         return shuffled.slice(0, num);
     }
-    
-    // Stub methods for the rest of the application's functionality
+
     _saveState() {}
     _updateInstructionText() {}
     _showGrammarTip() {}
