@@ -1,6 +1,6 @@
 // A helpful constant to make your API key easily accessible and visible.
 // ⚠️ IMPORTANT: Replace 'YOUR_GEMINI_API_KEY' with your actual key.
-const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY';
+const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
 // Constant for the API endpoint URL.
 // ⚠️ NOTE: This URL might need to be adjusted based on the specific Gemini API version and features you use.
@@ -483,4 +483,5 @@ class SentenceBuilder {
       }, delay);
     };
   }
+
 }
