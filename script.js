@@ -4,7 +4,7 @@ const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
 // A helpful constant to make your API key easily accessible and visible.
 // ⚠️ IMPORTANT: Replace 'YOUR_GEMINI_API_KEY' with your actual key.
-//const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
+//const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY';
 
 // ⚠️ IMPORTANT: For production, do NOT store your API key in client-side code.
 // Consider using a secure backend to manage API calls.
@@ -56,7 +56,7 @@ class SentenceBuilder {
             wordBankMsgBox: document.getElementById('word-bank-message-box'),
             instructionText: document.getElementById('instruction-text'),
             wordButtonsContainer: document.getElementById('word-buttons-container'),
-            punctuatonButtonsContainer: document.getElementById('punctuation-buttons'),
+            punctuationButtonsContainer: document.getElementById('punctuation-buttons'),
             readAloudBtn: document.getElementById('read-aloud-btn'),
             clearBtn: document.getElementById('clear-btn'),
             goBackBtn: document.getElementById('go-back-btn'),
@@ -91,7 +91,7 @@ class SentenceBuilder {
 
     _attachEventListeners() {
         this.elements.wordButtonsContainer.addEventListener('click', this._handleWordButtonClick.bind(this));
-        this.elements.punctuatonButtonsContainer.addEventListener('click', this._handlePunctuationButtonClick.bind(this));
+        this.elements.punctuationButtonsContainer.addEventListener('click', this._handlePunctuationButtonClick.bind(this));
         this.elements.goBackBtn.addEventListener('click', this._goBack.bind(this));
         this.elements.readAloudBtn.addEventListener('click', this._readSentenceAloud.bind(this));
         this.elements.clearBtn.addEventListener('click', this._clearSentence.bind(this));
@@ -175,7 +175,7 @@ class SentenceBuilder {
         const lastType = lastWord ? lastWord.type : 'start';
         const possibleNextTypes = this.constants.nextWordRules[lastType] || [];
 
-        const wordsFromJSON = this._getWordsFromJSON(possibleTypes);
+        const wordsFromJSON = this._getWordsFromJSON(possibleNextTypes);
         this._renderWordButtons(wordsFromJSON);
 
         if (GEMINI_API_KEY !== 'YOUR_GEMINI_API_KEY') {
@@ -183,7 +183,7 @@ class SentenceBuilder {
 
             try {
                 const prompt = `
-                    Based on the sentence fragment "${this.state.sentenceWordsArray.map(w => w.word).join(' ')}", and the available parts of speech: ${possibleTypes.join(', ')}, provide a list of 5 words that could come next, along with their parts of speech.
+                    Based on the sentence fragment "${this.state.sentenceWordsArray.map(w => w.word).join(' ')}", and the available parts of speech: ${possibleNextTypes.join(', ')}, provide a list of 5 words that could come next, along with their parts of speech.
 
                     **IMPORTANT RULES:**
                     1. All words must be simple, common, and appropriate for a 1st-grade student (ages 6-7).
