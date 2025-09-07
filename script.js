@@ -3,6 +3,9 @@
 const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
 
+// A helpful constant to make your API key easily accessible and visible.
+// ⚠️ IMPORTANT: Replace 'YOUR_GEMINI_API_KEY' with your actual key.
+// const GEMINI_API_KEY = '';
 
 // Constant for the API endpoint URL.
 const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
@@ -57,7 +60,6 @@ class SentenceBuilder {
       dynamicWordBank: document.getElementById('dynamic-word-bank'),
       wordButtonsContainer: document.getElementById('word-buttons-container'),
       punctuatonButtonsContainer: document.getElementById('punctuation-buttons'),
-      shuffleBtn: document.getElementById('shuffle-btn'),
       readAloudBtn: document.getElementById('read-aloud-btn'),
       clearBtn: document.getElementById('clear-btn'),
       goBackBtn: document.getElementById('go-back-btn'),
@@ -65,6 +67,7 @@ class SentenceBuilder {
       questionBtn: document.getElementById('question-btn'),
       feedbackToggle: document.getElementById('reduced-feedback-toggle'),
       themeIcon: document.getElementById('theme-icon'),
+      h1: document.querySelector('h1'),
     };
 
     this.debouncedFetchNextWords = this.debounce(this._fetchNextWords, 500);
@@ -74,6 +77,7 @@ class SentenceBuilder {
     this._parseConstants();
     this._attachEventListeners();
     this._renderSentence();
+    this._selectNewTheme();
     this.debouncedFetchNextWords();
     this._loadState();
   }
@@ -91,10 +95,6 @@ class SentenceBuilder {
   _attachEventListeners() {
     this.elements.wordButtonsContainer.addEventListener('click', this._handleWordButtonClick.bind(this));
     this.elements.punctuatonButtonsContainer.addEventListener('click', this._handlePunctuationButtonClick.bind(this));
-    this.elements.shuffleBtn.addEventListener('click', () => {
-      this._showMessage('Shuffling words...', 'info');
-      this.debouncedFetchNextWords();
-    });
     this.elements.goBackBtn.addEventListener('click', this._goBack.bind(this));
     this.elements.readAloudBtn.addEventListener('click', this._readSentenceAloud.bind(this));
     this.elements.clearBtn.addEventListener('click', this._clearSentence.bind(this));
@@ -106,6 +106,15 @@ class SentenceBuilder {
     const reducedFeedbackMode = localStorage.getItem('reducedFeedbackMode');
     this.state.isReducedFeedbackMode = reducedFeedbackMode === 'true';
     this.elements.feedbackToggle.checked = this.state.isReducedFeedbackMode;
+  }
+
+  _selectNewTheme() {
+    const themeNames = Object.keys(this.constants.themes);
+    const randomThemeName = themeNames[Math.floor(Math.random() * themeNames.length)];
+    this.state.currentTheme = this.constants.themes[randomThemeName];
+    this.elements.themeIcon.textContent = this.state.currentTheme.emoji;
+    this.elements.h1.innerHTML = `<span id="theme-icon" class="mr-3 text-3xl" aria-hidden="true">${this.state.currentTheme.emoji}</span>Let's build a sentence about ${this.state.currentTheme.name}!`;
+    this.elements.instructionText.textContent = 'Pick a word to start your sentence!';
   }
 
   _handleWordButtonClick(event) {
@@ -140,7 +149,7 @@ class SentenceBuilder {
     if (this.state.sentenceWordsArray.length === 0) {
       const span = document.createElement('span');
       span.className = 'text-xl sm:text-2xl text-gray-400';
-      span.textContent = "Let's build a sentence!";
+      span.textContent = `Let's build a sentence about ${this.state.currentTheme.name}!`;
       this.elements.sentenceArea.appendChild(span);
     } else {
       this.state.sentenceWordsArray.forEach(w => {
@@ -165,7 +174,7 @@ class SentenceBuilder {
   _renderWordBank(words) {
     this.elements.wordButtonsContainer.innerHTML = '';
     if (words.length === 0) {
-      this._showMessage('No words found. Try shuffling or clearing the sentence.', 'warning');
+      this._showMessage('No words found. Try clearing the sentence.', 'warning');
     }
 
     words.forEach(wordObj => {
@@ -217,6 +226,7 @@ class SentenceBuilder {
     this.state.hasVerb = false;
     this.state.successCounter = 0;
     this.elements.sentencesCounter.textContent = this.state.successCounter;
+    this._selectNewTheme(); // Select a new theme when clearing
     this.debouncedFetchNextWords();
     this._updateInstructionText();
     this._showMessage('Sentence cleared.', 'info');
@@ -232,6 +242,7 @@ class SentenceBuilder {
     this.state.sentenceWordsArray = [];
     this._renderSentence();
     this._updateInstructionText();
+    this._selectNewTheme(); // Select a new theme when completing
     this.debouncedFetchNextWords();
   }
 
@@ -246,7 +257,7 @@ class SentenceBuilder {
 
     const lastWord = this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1];
     const sentenceLength = this.state.sentenceWordsArray.length;
-    const currentTheme = this.state.currentTheme;
+    const currentTheme = this.state.currentTheme.id;
 
     let possibleTypes = this.constants.nextWordRules['start'];
     if (lastWord) {
@@ -288,7 +299,7 @@ class SentenceBuilder {
     if (neededWordsCount > 0) {
       this._showLoadingIndicator(true);
       const randomType = possibleTypes[Math.floor(Math.random() * possibleTypes.length)];
-      const prompt = this._createGeminiPrompt(randomType);
+      const prompt = this._createGeminiPrompt(randomType, this.state.currentTheme.name);
       
       this._fetchWordsFromGemini(prompt, signal)
         .then(geminiWords => {
@@ -313,23 +324,23 @@ class SentenceBuilder {
     }
   }
   
-  _createGeminiPrompt(wordType) {
+  _createGeminiPrompt(wordType, theme) {
     let prompt;
     switch(wordType) {
         case 'noun':
-            prompt = "Generate a JSON array of 5 common, simple nouns, with each word being a single string. Example: [\"dog\", \"cat\", \"house\"].";
+            prompt = `Generate a JSON array of 5 simple, common nouns related to the theme of ${theme}. Each word should be a single string. Example: [\"dog\", \"cat\", \"house\"].`;
             break;
         case 'verb':
-            prompt = "Generate a JSON array of 5 common, simple verbs (in present tense), with each word being a single string. Example: [\"run\", \"jump\", \"eat\"].";
+            prompt = `Generate a JSON array of 5 simple, common verbs (in present tense) related to the theme of ${theme}. Each word should be a single string. Example: [\"run\", \"jump\", \"eat\"].`;
             break;
         case 'adjective':
-            prompt = "Generate a JSON array of 5 common, simple adjectives, with each word being a single string. Example: [\"happy\", \"sad\", \"big\"].";
+            prompt = `Generate a JSON array of 5 simple, common adjectives related to the theme of ${theme}. Each word should be a single string. Example: [\"happy\", \"sad\", \"big\"].`;
             break;
         case 'adverb':
-            prompt = "Generate a JSON array of 5 common, simple adverbs ending in '-ly', with each word being a single string. Example: [\"quickly\", \"slowly\", \"happily\"].";
+            prompt = `Generate a JSON array of 5 simple, common adverbs ending in '-ly' related to the theme of ${theme}. Each word should be a single string. Example: [\"quickly\", \"slowly\", \"happily\"].`;
             break;
         default:
-            prompt = `Generate a JSON array of 5 simple ${wordType}s, with each word being a single string. Example: [\"word1\", \"word2\", \"word3\"].`;
+            prompt = `Generate a JSON array of 5 simple ${wordType}s related to the theme of ${theme}. Each word should be a single string. Example: [\"word1\", \"word2\", \"word3\"].`;
             break;
     }
     return prompt;
@@ -411,9 +422,6 @@ class SentenceBuilder {
   _showLoadingIndicator(show) {
     if (show) {
       this.elements.wordButtonsContainer.innerHTML = '<div class="text-center text-xl text-gray-400">Loading new words...</div>';
-      this.elements.shuffleBtn.disabled = true;
-    } else {
-      this.elements.shuffleBtn.disabled = false;
     }
   }
 
@@ -421,7 +429,7 @@ class SentenceBuilder {
     const instruction = this.state.hasSubject && this.state.hasVerb
       ? 'Great! Now finish your sentence.'
       : this.state.sentenceWordsArray.length === 0
-        ? 'Pick a word to start your sentence!'
+        ? `Pick a word to start your sentence about ${this.state.currentTheme.name}!`
         : 'Keep going!';
     this.elements.instructionText.textContent = instruction;
   }
