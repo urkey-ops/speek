@@ -3,16 +3,17 @@
 const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
 
-// A helpful constant to make your API key easily accessible and visible.
-// ⚠️ IMPORTANT: Replace 'YOUR_GEMINI_API_KEY' with your actual key.
-// const GEMINI_API_KEY = '';
-
 // Constant for the API endpoint URL.
 const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
 
 // Load external words data. This is the first line of defense.
 fetch('words.json')
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
   .then(data => {
     window.sentenceData = data;
     const app = new SentenceBuilder();
@@ -460,4 +461,3 @@ class SentenceBuilder {
     };
   }
 }
-
