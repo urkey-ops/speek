@@ -47,6 +47,7 @@ class SentenceBuilder {
             hasSubject: false,
             hasVerb: false,
             currentTheme: null,
+            highFiveMode: false,
         };
 
         this.elements = {
@@ -67,15 +68,16 @@ class SentenceBuilder {
             h1: document.querySelector('h1'),
         };
         this.debouncedFetchNextWords = this.debounce(this._fetchNextWords, 500);
+        this.messageTimeout = null;
     }
 
     init() {
         this._parseConstants();
         this._attachEventListeners();
         this._selectNewTheme();
+        this._loadState();
         this._renderSentence();
         this.debouncedFetchNextWords();
-        this._loadState();
     }
 
     _parseConstants() {
@@ -100,9 +102,24 @@ class SentenceBuilder {
     }
 
     _loadState() {
+        const savedSentence = localStorage.getItem('sentenceWordsArray');
+        const savedCounter = localStorage.getItem('successCounter');
         const reducedFeedbackMode = localStorage.getItem('reducedFeedbackMode');
+
+        if (savedSentence) {
+            this.state.sentenceWordsArray = JSON.parse(savedSentence);
+        }
+        if (savedCounter) {
+            this.state.successCounter = parseInt(savedCounter, 10);
+            this.elements.sentencesCounter.textContent = this.state.successCounter;
+        }
         this.state.isReducedFeedbackMode = reducedFeedbackMode === 'true';
         this.elements.feedbackToggle.checked = this.state.isReducedFeedbackMode;
+    }
+
+    _saveState() {
+        localStorage.setItem('sentenceWordsArray', JSON.stringify(this.state.sentenceWordsArray));
+        localStorage.setItem('successCounter', this.state.successCounter);
     }
 
     _selectNewTheme() {
@@ -171,7 +188,7 @@ class SentenceBuilder {
         }
         this.state.fetchAbortController = new AbortController();
 
-        const lastWord = this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1];
+        const lastWord = this.state.sentenceWordsArray[this.state.state.sentenceWordsArray.length - 1];
         const lastType = lastWord ? lastWord.type : 'start';
         const possibleNextTypes = this.constants.nextWordRules[lastType] || [];
 
@@ -302,15 +319,131 @@ class SentenceBuilder {
         return shuffled.slice(0, num);
     }
 
-    _saveState() {}
-    _updateInstructionText() {}
-    _showGrammarTip() {}
-    _updatePunctuationButtons() {}
-    _updateButtonStates() {}
-    _goBack() {}
-    _readSentenceAloud() {}
-    _clearSentence() {}
-    _completeSentence() {}
-    _handleReducedFeedbackToggle() {}
-    _showMessage(message, color) {}
+    _updateInstructionText() {
+        const lastWord = this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1];
+        let message = '';
+        if (this.state.highFiveMode) {
+            message = 'Great job! Click the High Five button to finish!';
+        } else if (!lastWord) {
+            message = 'Pick a word to start your sentence!';
+        } else {
+            const nextTypes = this.constants.nextWordRules[lastWord.type];
+            if (nextTypes.length > 0) {
+                const partOfSpeechNames = nextTypes.map(type => {
+                    if (type === 'determiner') return 'a determiner';
+                    if (type === 'adjective') return 'an adjective';
+                    return `a ${type}`;
+                });
+                const formattedList = partOfSpeechNames.join(', ').replace(/, ([^,]*)$/, ' or $1');
+                message = `Your next word could be ${formattedList}!`;
+            } else {
+                message = "That's a complete thought! Add punctuation or start over.";
+            }
+        }
+        this.elements.instructionText.textContent = message;
+    }
+
+    _showGrammarTip() {
+        const lastWord = this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1];
+        if (lastWord && this.constants.grammarTips[lastWord.type]) {
+            const message = this.constants.grammarTips[lastWord.type];
+            this._showMessage(message, 'info');
+        }
+    }
+    
+    _showMessage(message, color) {
+        const messageBox = this.elements.wordBankMsgBox;
+        messageBox.textContent = message;
+        messageBox.className = `message-box visible p-2 rounded-lg text-center font-semibold text-white mt-4`;
+    
+        if (color === 'info') {
+            messageBox.classList.add('bg-blue-500');
+        } else if (color === 'error') {
+            messageBox.classList.add('bg-red-500');
+        } else if (color === 'success') {
+            messageBox.classList.add('bg-green-500');
+        } else {
+            messageBox.classList.add('bg-gray-500'); // Default color
+        }
+    
+        clearTimeout(this.messageTimeout);
+        this.messageTimeout = setTimeout(() => {
+            messageBox.classList.remove('visible', 'bg-blue-500', 'bg-red-500', 'bg-green-500', 'bg-gray-500');
+        }, 3000);
+    }
+
+    _updatePunctuationButtons() {
+        const hasSubject = this.state.sentenceWordsArray.some(w => ['noun', 'pronoun'].includes(w.type));
+        const hasVerb = this.state.sentenceWordsArray.some(w => w.type === 'verb');
+        const lastWord = this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1];
+        
+        const canPunctuate = lastWord && lastWord.type !== 'punctuation' && hasSubject && hasVerb;
+        
+        if (canPunctuate) {
+            this.elements.exclamationBtn.disabled = false;
+            this.elements.questionBtn.disabled = false;
+            this.elements.exclamationBtn.classList.remove('disabled-btn');
+            this.elements.questionBtn.classList.remove('disabled-btn');
+        } else {
+            this.elements.exclamationBtn.disabled = true;
+            this.elements.questionBtn.disabled = true;
+            this.elements.exclamationBtn.classList.add('disabled-btn');
+            this.elements.questionBtn.classList.add('disabled-btn');
+        }
+    }
+
+    _updateButtonStates() {
+        const hasSubject = this.state.sentenceWordsArray.some(w => ['noun', 'pronoun'].includes(w.type));
+        const hasVerb = this.state.sentenceWordsArray.some(w => w.type === 'verb');
+        const isComplete = hasSubject && hasVerb;
+
+        this.elements.goBackBtn.disabled = this.state.sentenceWordsArray.length === 0;
+
+        this.elements.readAloudBtn.disabled = this.state.sentenceWordsArray.length < 2;
+
+        this.elements.highFiveBtn.disabled = !isComplete;
+        this.state.highFiveMode = isComplete;
+    }
+
+    _goBack() {
+        this.state.sentenceWordsArray.pop();
+        this._saveState();
+        this._renderSentence();
+        this.debouncedFetchNextWords();
+        this._updateInstructionText();
+    }
+
+    _readSentenceAloud() {
+        const sentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
+        if (sentence.length > 0) {
+            const utterance = new SpeechSynthesisUtterance(sentence);
+            utterance.lang = 'en-US';
+            speechSynthesis.speak(utterance);
+        }
+    }
+
+    _clearSentence() {
+        this.state.sentenceWordsArray = [];
+        this.state.highFiveMode = false;
+        this._renderSentence();
+        this.debouncedFetchNextWords();
+        this._updateInstructionText();
+        this._saveState();
+    }
+
+    _completeSentence() {
+        this.state.successCounter++;
+        this.elements.sentencesCounter.textContent = this.state.successCounter;
+        this._saveState();
+        this._showMessage('Sentence complete! Nicely done.', 'success');
+        this.state.sentenceHistory.push(this.state.sentenceWordsArray);
+        this.state.sentenceWordsArray = [];
+        this._renderSentence();
+        this.debouncedFetchNextWords();
+    }
+
+    _handleReducedFeedbackToggle(event) {
+        this.state.isReducedFeedbackMode = event.target.checked;
+        localStorage.setItem('reducedFeedbackMode', this.state.isReducedFeedbackMode);
+    }
 }
