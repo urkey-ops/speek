@@ -3,20 +3,14 @@
 const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
 
-// A helpful constant to make your API key easily accessible and visible.
-// ⚠️ IMPORTANT: Replace 'YOUR_GEMINI_API_KEY' with your actual key.
-//const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
-
-// Constant for the API endpoint URL.
+const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY';
 const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
 
-// Load external words data. ✅ FIX 1: removed leading slash in path
+// ✅ FIX: correct path for GitHub Pages
 fetch('words.json')
-  .then(response => {
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
+  .then(res => {
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    return res.json();
   })
   .then(data => {
     window.sentenceData = data;
@@ -24,7 +18,7 @@ fetch('words.json')
     app.init();
   })
   .catch(err => {
-    console.error('Failed to load words.json. Application cannot start.', err);
+    console.error('Failed to load words.json', err);
     document.body.innerHTML = '<div class="flex items-center justify-center h-screen"><p class="text-xl text-red-500">Error: Could not load the word bank. Please try again later.</p></div>';
   });
 
@@ -51,16 +45,12 @@ class SentenceBuilder {
       currentTheme: null,
     };
 
-    // Cache DOM elements
     this.elements = {
       sentenceArea: document.getElementById('sentence-area'),
-      messageBox: document.getElementById('message-box'),
-      celebrationContainer: document.getElementById('celebration-section'),
       sentencesCounter: document.getElementById('sentences-built-counter'),
       highFiveBtn: document.getElementById('high-five-btn'),
       wordBankMsgBox: document.getElementById('word-bank-message-box'),
       instructionText: document.getElementById('instruction-text'),
-      dynamicWordBank: document.getElementById('dynamic-word-bank'),
       wordButtonsContainer: document.getElementById('word-buttons-container'),
       punctuatonButtonsContainer: document.getElementById('punctuation-buttons'),
       readAloudBtn: document.getElementById('read-aloud-btn'),
@@ -90,7 +80,7 @@ class SentenceBuilder {
     this.constants.themes = data.themes;
     this.constants.typeColors = data.typeColors;
     this.constants.grammarTips = data.grammarTips;
-    // ✅ FIX 2: use "words" instead of "wordCollections"
+    // ✅ FIX: use words
     this.constants.wordCollections = data.words;
     this.constants.nextWordRules = data.nextWordRules;
     this.constants.successMessages = data.successMessages;
@@ -113,12 +103,11 @@ class SentenceBuilder {
   }
 
   _selectNewTheme() {
-    // ✅ FIX 3: themes is an array, not object
     const randomIndex = Math.floor(Math.random() * this.constants.themes.length);
     this.state.currentTheme = this.constants.themes[randomIndex];
 
     this.elements.themeIcon.textContent = this.state.currentTheme.emoji;
-    this.elements.h1.innerHTML = `<span id="theme-icon" class="mr-3 text-3xl" aria-hidden="true">${this.state.currentTheme.emoji}</span>Let's build a sentence about ${this.state.currentTheme.name}!`;
+    this.elements.h1.innerHTML = `<span id="theme-icon" class="mr-3 text-3xl">${this.state.currentTheme.emoji}</span>Let's build a sentence about ${this.state.currentTheme.name}!`;
     this.elements.instructionText.textContent = 'Pick a word to start your sentence!';
   }
 
@@ -134,9 +123,7 @@ class SentenceBuilder {
     this._renderSentence();
     this.debouncedFetchNextWords();
     this._updateInstructionText();
-    if (!this.state.isReducedFeedbackMode) {
-      this._showGrammarTip();
-    }
+    if (!this.state.isReducedFeedbackMode) this._showGrammarTip();
   }
 
   _handlePunctuationButtonClick(event) {
@@ -159,10 +146,7 @@ class SentenceBuilder {
     } else {
       this.state.sentenceWordsArray.forEach(w => {
         const span = document.createElement('span');
-        const color = this.constants.typeColors[w.type] || '#6B7280';
-        span.className = `sentence-word`;
-        span.style.backgroundColor = color;
-        span.style.color = 'white';
+        span.className = `sentence-word ${this.constants.typeColors[w.type] || ''}`;
         span.textContent = w.word;
         if (w.isGeminiFetched) {
           span.classList.add('gemini-word');
@@ -171,7 +155,6 @@ class SentenceBuilder {
         this.elements.sentenceArea.appendChild(span);
       });
     }
-
     this._updatePunctuationButtons();
     this._updateButtonStates();
   }
@@ -184,35 +167,30 @@ class SentenceBuilder {
 
     words.forEach(wordObj => {
       const button = document.createElement('button');
-      const color = this.constants.typeColors[wordObj.type] || '#9CA3AF';
-      button.className = `base-button word-button round active:scale-105 active:shadow-lg`;
-      button.style.backgroundColor = color;
-      button.style.color = 'white';
+      button.className = `base-button word-button round ${this.constants.typeColors[wordObj.type] || ''}`;
       button.dataset.word = wordObj.word;
       button.dataset.type = wordObj.type;
       button.dataset.isGeminiFetched = wordObj.isGeminiFetched || false;
       button.textContent = wordObj.word;
 
-      if (wordObj.isGeminiFetched) {
-        button.classList.add('gemini-word-button');
-      }
-
+      if (wordObj.isGeminiFetched) button.classList.add('gemini-word-button');
       this.elements.wordButtonsContainer.appendChild(button);
     });
     this._showLoadingIndicator(false);
   }
 
   _updatePunctuationButtons() {
-    const lastWord = this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1];
+    const lastWord = this.state.sentenceWordsArray.at(-1);
     const enablePunctuation = lastWord && lastWord.type !== 'punctuation' && this.state.hasSubject && this.state.hasVerb;
     this.elements.exclamationBtn.disabled = !enablePunctuation;
     this.elements.questionBtn.disabled = !enablePunctuation;
   }
 
   _updateButtonStates() {
-    this.elements.goBackBtn.disabled = this.state.sentenceWordsArray.length === 0;
-    this.elements.clearBtn.disabled = this.state.sentenceWordsArray.length === 0;
-    this.elements.readAloudBtn.disabled = this.state.sentenceWordsArray.length === 0;
+    const disabled = this.state.sentenceWordsArray.length === 0;
+    this.elements.goBackBtn.disabled = disabled;
+    this.elements.clearBtn.disabled = disabled;
+    this.elements.readAloudBtn.disabled = disabled;
   }
 
   _goBack() {
@@ -225,12 +203,12 @@ class SentenceBuilder {
 
   _clearSentence() {
     this.state.sentenceWordsArray = [];
-    this._renderSentence();
     this.state.sentenceHistory = [];
     this.state.hasSubject = false;
     this.state.hasVerb = false;
     this.state.successCounter = 0;
     this.elements.sentencesCounter.textContent = this.state.successCounter;
+    this._renderSentence();
     this._selectNewTheme();
     this.debouncedFetchNextWords();
     this._updateInstructionText();
@@ -242,9 +220,9 @@ class SentenceBuilder {
     this.elements.sentencesCounter.textContent = this.state.successCounter;
     this._saveState();
     this._showCelebration();
+    this.state.sentenceWordsArray = [];
     this.state.hasSubject = false;
     this.state.hasVerb = false;
-    this.state.sentenceWordsArray = [];
     this._renderSentence();
     this._updateInstructionText();
     this._selectNewTheme();
@@ -252,50 +230,33 @@ class SentenceBuilder {
   }
 
   _fetchNextWords() {
-    if (this.state.fetchAbortController) {
-      this.state.fetchAbortController.abort();
-    }
+    if (this.state.fetchAbortController) this.state.fetchAbortController.abort();
     this.state.fetchAbortController = new AbortController();
     const signal = this.state.fetchAbortController.signal;
     this.state.lastFetchId++;
     const fetchId = this.state.lastFetchId;
 
-    const lastWord = this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1];
+    const lastWord = this.state.sentenceWordsArray.at(-1);
     const sentenceLength = this.state.sentenceWordsArray.length;
-    // currentTheme is object, not id
-    const currentTheme = this.state.currentTheme.name;
 
     let possibleTypes = this.constants.nextWordRules['start'];
-    if (lastWord) {
-      if (this.constants.nextWordRules[lastWord.type]) {
-        possibleTypes = this.constants.nextWordRules[lastWord.type];
-      } else {
-        possibleTypes = ['noun', 'verb', 'adjective', 'adverb', 'preposition', 'conjunction'];
-      }
+    if (lastWord && this.constants.nextWordRules[lastWord.type]) {
+      possibleTypes = this.constants.nextWordRules[lastWord.type];
     }
 
-    this.state.hasSubject = this.state.hasSubject || (lastWord && ['noun', 'pronoun'].includes(lastWord.type));
-    this.state.hasVerb = this.state.hasVerb || (lastWord && lastWord.type === 'verb');
+    // recalc subject/verb presence from entire array
+    this.state.hasSubject = this.state.sentenceWordsArray.some(w => ['noun','pronoun'].includes(w.type));
+    this.state.hasVerb = this.state.sentenceWordsArray.some(w => w.type === 'verb');
 
     if (sentenceLength >= 1) {
-      if (!this.state.hasSubject) {
-        possibleTypes = possibleTypes.filter(type => ['noun', 'pronoun'].includes(type));
-        if (possibleTypes.length === 0) {
-          possibleTypes = ['noun', 'pronoun'];
-        }
-      } else if (!this.state.hasVerb) {
-        possibleTypes = possibleTypes.filter(type => ['verb'].includes(type));
-        if (possibleTypes.length === 0) {
-          possibleTypes = ['verb'];
-        }
-      }
+      if (!this.state.hasSubject) possibleTypes = ['noun', 'pronoun'];
+      else if (!this.state.hasVerb) possibleTypes = ['verb'];
     }
 
-    // ✅ FIX 4: case-insensitive theme comparison
     const availableWords = possibleTypes.flatMap(type =>
       this.constants.wordCollections[type]
-        .filter(w => !w.theme || w.theme.toLowerCase() === this.state.currentTheme.name.toLowerCase())
-        .map(w => ({ ...w, type, source: 'predefined' }))
+        ?.filter(w => !w.theme || w.theme.toLowerCase() === this.state.currentTheme.name.toLowerCase())
+        .map(w => ({ ...w, type, source: 'predefined' })) || []
     );
 
     const neededWordsCount = 10 - availableWords.length;
@@ -306,7 +267,7 @@ class SentenceBuilder {
       this._showLoadingIndicator(true);
       const randomType = possibleTypes[Math.floor(Math.random() * possibleTypes.length)];
       const prompt = this._createGeminiPrompt(randomType, this.state.currentTheme.name);
-      
+
       this._fetchWordsFromGemini(prompt, signal)
         .then(geminiWords => {
           if (fetchId !== this.state.lastFetchId) return;
@@ -315,10 +276,7 @@ class SentenceBuilder {
           this._renderWordBank(wordsToRender);
         })
         .catch(error => {
-          if (error.name === 'AbortError') {
-            console.log('Fetch aborted.');
-            return;
-          }
+          if (error.name === 'AbortError') return;
           console.error('Gemini API call failed:', error);
           this._showLoadingIndicator(false);
           this._showMessage('Could not fetch new words from Gemini. Using pre-defined words.', 'error');
@@ -329,68 +287,37 @@ class SentenceBuilder {
       this._renderWordBank(wordsToRender);
     }
   }
-  
+
   _createGeminiPrompt(wordType, theme) {
-    let prompt;
     switch(wordType) {
-        case 'noun':
-            prompt = `Generate a JSON array of 5 simple, common nouns related to the theme of ${theme}. Each word should be a single string. Example: ["dog", "cat", "house"].`;
-            break;
-        case 'verb':
-            prompt = `Generate a JSON array of 5 simple, common verbs (in present tense) related to the theme of ${theme}. Each word should be a single string. Example: ["run", "jump", "eat"].`;
-            break;
-        case 'adjective':
-            prompt = `Generate a JSON array of 5 simple, common adjectives related to the theme of ${theme}. Each word should be a single string. Example: ["happy", "sad", "big"].`;
-            break;
-        case 'adverb':
-            prompt = `Generate a JSON array of 5 simple, common adverbs ending in '-ly' related to the theme of ${theme}. Each word should be a single string. Example: ["quickly", "slowly", "happily"].`;
-            break;
-        default:
-            prompt = `Generate a JSON array of 5 simple ${wordType}s related to the theme of ${theme}. Each word should be a single string. Example: ["word1", "word2", "word3"].`;
-            break;
+      case 'noun': return `Generate a JSON array of 5 simple, common nouns related to ${theme}.`;
+      case 'verb': return `Generate a JSON array of 5 simple, present tense verbs related to ${theme}.`;
+      case 'adjective': return `Generate a JSON array of 5 simple, common adjectives related to ${theme}.`;
+      case 'adverb': return `Generate a JSON array of 5 simple adverbs ending in '-ly' related to ${theme}.`;
+      default: return `Generate a JSON array of 5 simple ${wordType}s related to ${theme}.`;
     }
-    return prompt;
   }
 
   async _fetchWordsFromGemini(prompt, signal) {
-    const payload = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "ARRAY",
-          items: {
-            type: "STRING"
-          }
-        }
-      }
-    };
-  
+    const payload = { contents: [{ parts: [{ text: prompt }] }] };
+    const response = await fetch(GEMINI_API_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal
+    });
+
+    if (!response.ok) throw new Error(`API call failed with status: ${response.status}`);
+
+    const result = await response.json();
+    let text = result.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+    // ✅ strip backticks if Gemini returns fenced JSON
+    text = text.replace(/```json|```/g, '').trim();
     try {
-      const response = await fetch(GEMINI_API_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        signal: signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(`API call failed with status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      const json = result.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (json) {
-        return JSON.parse(json);
-      } else {
-        throw new Error('No content returned from API.');
-      }
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        throw error;
-      }
-      console.error('Error fetching from Gemini API:', error);
-      throw error;
+      return JSON.parse(text);
+    } catch (e) {
+      console.error('Gemini returned invalid JSON:', text);
+      return [];
     }
   }
 
@@ -409,7 +336,7 @@ class SentenceBuilder {
   }
 
   _showGrammarTip() {
-    const lastWord = this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1];
+    const lastWord = this.state.sentenceWordsArray.at(-1);
     const type = lastWord ? lastWord.type : 'other';
     const tip = this.constants.grammarTips[type] || "This word helps connect other words!";
     this._showMessage(tip, 'info');
@@ -419,9 +346,7 @@ class SentenceBuilder {
     const box = this.elements.wordBankMsgBox;
     box.textContent = message;
     box.className = `message-box visible text-center p-3 rounded-lg w-full text-white ${type === 'info' ? 'bg-indigo-500' : type === 'warning' ? 'bg-orange-500' : 'bg-red-500'}`;
-    setTimeout(() => {
-      box.classList.remove('visible');
-    }, 2000);
+    setTimeout(() => box.classList.remove('visible'), 2000);
   }
 
   _showLoadingIndicator(show) {
@@ -440,8 +365,7 @@ class SentenceBuilder {
   }
 
   _showCelebration() {
-    const randomIndex = Math.floor(Math.random() * this.constants.successMessages.length);
-    const message = this.constants.successMessages[randomIndex];
+    const message = this.constants.successMessages[Math.floor(Math.random() * this.constants.successMessages.length)];
     this._showMessage(message, 'info');
   }
 
@@ -451,5 +375,11 @@ class SentenceBuilder {
 
   debounce(func, delay) {
     let timeout;
-    return (...args
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), delay);
+    };
+  }
+}
+
 
