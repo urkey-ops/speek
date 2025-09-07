@@ -3,7 +3,7 @@
 const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
 
-const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY';
+//const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY';
 const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
 
 // ✅ FIX: correct path for GitHub Pages
