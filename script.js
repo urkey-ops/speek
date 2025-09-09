@@ -61,6 +61,28 @@ function debounce(func, wait) {
   };
 }
 
+// -------------------------------------------------------------
+// NEW HELPER FUNCTION TO FIND TEXT IN RESPONSE
+// This will search the entire JSON object for the text content.
+// -------------------------------------------------------------
+function findTextInResponse(obj) {
+    if (typeof obj === 'string') {
+        return obj;
+    }
+    if (typeof obj === 'object' && obj !== null) {
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                const result = findTextInResponse(obj[key]);
+                if (result) {
+                    return result;
+                }
+            }
+        }
+    }
+    return null;
+}
+
+
 class SentenceBuilder {
   constructor() {
     this.typeColors = {
@@ -121,8 +143,14 @@ class SentenceBuilder {
         
         const response = await callGeminiAPI(prompt);
         
-        const words = response.candidates[0].content.parts[0].text.trim().split(',').map(word => word.trim());
+        // Use the new helper function to find the text
+        const wordsText = findTextInResponse(response);
         
+        let words = [];
+        if (wordsText) {
+             words = wordsText.trim().split(',').map(word => word.trim());
+        }
+
         if (words && words.length > 0) {
             this.state.wordBank = words;
             this._renderWordBank();
@@ -209,15 +237,17 @@ class SentenceBuilder {
     
     try {
       const response = await callGeminiAPI(prompt);
-      const feedback = response.candidates[0].content.parts[0].text;
+      const feedback = findTextInResponse(response);
       
-      if (feedback.includes("Correct")) {
+      if (feedback && feedback.includes("Correct")) {
         this._showMessage('Awesome! Great sentence! 🎉', 'bg-success');
         this.state.sentenceWordsArray = [];
         this._renderSentence();
         this.debouncedFetchNextWords();
-      } else {
+      } else if (feedback) {
         this._showMessage(feedback, 'bg-warning');
+      } else {
+        throw new Error('Could not find feedback in API response.');
       }
     } catch (error) {
       console.error('Validation API call failed:', error);
