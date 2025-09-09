@@ -128,31 +128,49 @@ class SentenceBuilder {
 
   _renderWordBank() {
     this.elements.wordBankContainer.innerHTML = '';
-
-    const typeOrder = ["noun", "verb", "adjective", "adverb", "preposition", "determiner", "conjunction", "punctuation"];
-
-    typeOrder.forEach(type => {
-      const words = this.state.wordBank[type];
-      if (words && words.length > 0) {
-        const heading = document.createElement('div');
-        heading.className = 'word-group-heading';
-        heading.textContent = type.charAt(0).toUpperCase() + type.slice(1) + 's';
-        this.elements.wordBankContainer.appendChild(heading);
-
-        const groupContainer = document.createElement('div');
-        groupContainer.className = 'flex flex-wrap justify-center gap-4 w-full';
-        words.forEach(wordObj => {
-          const wordButton = document.createElement('button');
-          wordButton.textContent = wordObj.word;
-          wordButton.dataset.type = wordObj.type;
-          wordButton.dataset.word = wordObj.word;
-          wordButton.className = `word-button squircle ${this.typeColors[wordObj.type] || this.typeColors.other}`;
-          wordButton.title = this.grammarTips[wordObj.type];
-          groupContainer.appendChild(wordButton);
-        });
-        this.elements.wordBankContainer.appendChild(groupContainer);
-      }
-    });
+    const wordGroups = this.state.wordBank;
+    
+    // Check if the word bank is a single shuffled array
+    if (wordGroups.shuffled) {
+      const words = wordGroups.shuffled;
+      const groupContainer = document.createElement('div');
+      groupContainer.className = 'flex flex-wrap justify-center gap-4 w-full';
+      words.forEach(wordObj => {
+        const wordButton = document.createElement('button');
+        wordButton.textContent = wordObj.word;
+        wordButton.dataset.type = wordObj.type;
+        wordButton.dataset.word = wordObj.word;
+        wordButton.className = `word-button squircle ${this.typeColors[wordObj.type] || this.typeColors.other}`;
+        wordButton.title = this.grammarTips[wordObj.type];
+        groupContainer.appendChild(wordButton);
+      });
+      this.elements.wordBankContainer.appendChild(groupContainer);
+    } else {
+      // Original logic for rendering categorized words
+      const typeOrder = ["noun", "verb", "adjective", "adverb", "preposition", "determiner", "conjunction", "punctuation"];
+      typeOrder.forEach(type => {
+        const words = wordGroups[type];
+        if (words && words.length > 0) {
+          const heading = document.createElement('div');
+          heading.className = 'word-group-heading';
+          heading.textContent = type.charAt(0).toUpperCase() + type.slice(1) + 's';
+          this.elements.wordBankContainer.appendChild(heading);
+  
+          const groupContainer = document.createElement('div');
+          groupContainer.className = 'flex flex-wrap justify-center gap-4 w-full';
+          words.forEach(wordObj => {
+            const wordButton = document.createElement('button');
+            wordButton.textContent = wordObj.word;
+            wordButton.dataset.type = wordObj.type;
+            wordButton.dataset.word = wordObj.word;
+            wordButton.className = `word-button squircle ${this.typeColors[wordObj.type] || this.typeColors.other}`;
+            wordButton.title = this.grammarTips[wordObj.type];
+            groupContainer.appendChild(wordButton);
+          });
+          this.elements.wordBankContainer.appendChild(groupContainer);
+        }
+      });
+    }
   }
 
   _handleWordClick(event) {
@@ -241,7 +259,14 @@ class SentenceBuilder {
   }
 
   _shuffleWords() {
-    this.state.wordBank = this._shuffleArray(this.state.wordBank);
+    // Flatten the word bank object into a single array
+    const allWords = Object.values(this.state.wordBank).flat();
+    // Shuffle the combined array
+    const shuffledWords = this._shuffleArray(allWords);
+    // Overwrite the wordBank with the shuffled words
+    this.state.wordBank = {
+      'shuffled': shuffledWords
+    };
     this._renderWordBank();
     this._saveState();
   }
