@@ -15,9 +15,9 @@ document.body.innerHTML = '<div class="flex items-center justify-center h-screen
 });
 
 const SOUND_EFFECTS = {
-click: new Audio('https://www.google.com/search?q=https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'),
-clear: new Audio('https://www.google.com/search?q=https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'),
-complete: new Audio('https://www.google.com/search?q=https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3')
+click: new Audio('https://www.google.com/search?q=https://cdn.pixabay.com/audio/2022/03/10/audio_5179047b19.mp3'),
+clear: new Audio('https://www.google.com/search?q=https://cdn.pixabay.com/audio/2022/03/10/audio_f55198d024.mp3'),
+complete: new Audio('https://www.google.com/search?q=https://cdn.pixabay.com/audio/2022/03/10/audio_b796472404.mp3')
 };
 
 /**
