@@ -1,462 +1,288 @@
-{
-  "themes": [
-    { "name": "Animals", "emoji": "🦁" },
-    { "name": "Food", "emoji": "🍕" },
-    { "name": "School", "emoji": "🏫" },
-    { "name": "Space", "emoji": "🚀" },
-    { "name": "Weather", "emoji": "☀️" },
-    { "name": "Sports", "emoji": "⚽" },
-    { "name": "Music", "emoji": "🎶" }
-  ],
-  "typeColors": {
-    "noun": "bg-blue-300 text-blue-900",
-    "verb": "bg-purple-300 text-purple-900",
-    "adjective": "bg-lime-300 text-lime-900",
-    "adverb": "bg-orange-300 text-orange-900",
-    "preposition": "bg-amber-300 text-amber-900",
-    "conjunction": "bg-fuchsia-300 text-fuchsia-900",
-    "determiner": "bg-sky-300 text-sky-900",
-    "pronoun": "bg-teal-300 text-teal-900",
-    "other": "bg-gray-300 text-gray-900",
-    "punctuation": "bg-zinc-700 text-white"
-  },
-  "grammarTips": {
-    "noun": "A noun is a person, place, or thing!",
-    "verb": "A verb is an action word or a state of being!",
-    "adjective": "An adjective describes a noun!",
-    "adverb": "An adverb describes a verb or an adjective!",
-    "preposition": "A preposition shows position or direction!",
-    "conjunction": "A conjunction joins words, phrases, or clauses!",
-    "determiner": "A determiner introduces a noun!",
-    "pronoun": "A pronoun takes the place of a noun!",
-    "punctuation": "Punctuation helps a sentence make sense!"
-  },
-  "themesData": {
-    "Animals": {
-      "noun": [
-        { "word": "lion", "theme": "Animals" },
-        { "word": "tiger", "theme": "Animals" },
-        { "word": "bear", "theme": "Animals" },
-        { "word": "elephant", "theme": "Animals" },
-        { "word": "monkey", "theme": "Animals" },
-        { "word": "giraffe", "theme": "Animals" },
-        { "word": "zebra", "theme": "Animals" },
-        { "word": "fox", "theme": "Animals" },
-        { "word": "wolf", "theme": "Animals" },
-        { "word": "rabbit", "theme": "Animals" },
-        { "word": "snake", "theme": "Animals" },
-        { "word": "fish", "theme": "Animals" },
-        { "word": "shark", "theme": "Animals" },
-        { "word": "whale", "theme": "Animals" },
-        { "word": "dolphin", "theme": "Animals" },
-        { "word": "owl", "theme": "Animals" },
-        { "word": "eagle", "theme": "Animals" },
-        { "word": "chicken", "theme": "Animals" },
-        { "word": "cow", "theme": "Animals" },
-        { "word": "pig", "theme": "Animals" },
-        { "word": "cat", "theme": "Animals" },
-        { "word": "dog", "theme": "Animals" }
-      ],
-      "verb": [
-        { "word": "roars", "theme": "Animals" },
-        { "word": "swims", "theme": "Animals" },
-        { "word": "flies", "theme": "Animals" },
-        { "word": "crawls", "theme": "Animals" },
-        { "word": "hunts", "theme": "Animals" },
-        { "word": "eats", "theme": "Animals" },
-        { "word": "sleeps", "theme": "Animals" },
-        { "word": "plays", "theme": "Animals" },
-        { "word": "chases", "theme": "Animals" }
-      ],
-      "adjective": [
-        { "word": "big", "theme": "Animals" },
-        { "word": "small", "theme": "Animals" },
-        { "word": "wild", "theme": "Animals" },
-        { "word": "tame", "theme": "Animals" },
-        { "word": "friendly", "theme": "Animals" },
-        { "word": "scary", "theme": "Animals" },
-        { "word": "fluffy", "theme": "Animals" },
-        { "word": "fast", "theme": "Animals" },
-        { "word": "slow", "theme": "Animals" }
-      ],
-      "adverb": [
-        { "word": "quickly", "theme": "Animals" },
-        { "word": "slowly", "theme": "Animals" },
-        { "word": "gracefully", "theme": "Animals" },
-        { "word": "loudly", "theme": "Animals" },
-        { "word": "quietly", "theme": "Animals" }
-      ]
-    },
-    "Food": {
-      "noun": [
-        { "word": "pizza", "theme": "Food" },
-        { "word": "apple", "theme": "Food" },
-        { "word": "banana", "theme": "Food" },
-        { "word": "carrot", "theme": "Food" },
-        { "word": "bread", "theme": "Food" },
-        { "word": "cheese", "theme": "Food" },
-        { "word": "soup", "theme": "Food" },
-        { "word": "salad", "theme": "Food" },
-        { "word": "burger", "theme": "Food" },
-        { "word": "fries", "theme": "Food" },
-        { "word": "cookie", "theme": "Food" },
-        { "word": "cake", "theme": "Food" }
-      ],
-      "verb": [
-        { "word": "eats", "theme": "Food" },
-        { "word": "cooks", "theme": "Food" },
-        { "word": "bakes", "theme": "Food" },
-        { "word": "mixes", "theme": "Food" },
-        { "word": "sips", "theme": "Food" },
-        { "word": "tastes", "theme": "Food" },
-        { "word": "serves", "theme": "Food" }
-      ],
-      "adjective": [
-        { "word": "tasty", "theme": "Food" },
-        { "word": "sweet", "theme": "Food" },
-        { "word": "sour", "theme": "Food" },
-        { "word": "salty", "theme": "Food" },
-        { "word": "spicy", "theme": "Food" },
-        { "word": "fresh", "theme": "Food" },
-        { "word": "hot", "theme": "Food" },
-        { "word": "cold", "theme": "Food" }
-      ],
-      "adverb": [
-        { "word": "greedily", "theme": "Food" },
-        { "word": "quickly", "theme": "Food" },
-        { "word": "slowly", "theme": "Food" },
-        { "word": "deliciously", "theme": "Food" }
-      ]
-    },
-    "School": {
-      "noun": [
-        { "word": "teacher", "theme": "School" },
-        { "word": "student", "theme": "School" },
-        { "word": "book", "theme": "School" },
-        { "word": "pencil", "theme": "School" },
-        { "word": "classroom", "theme": "School" },
-        { "word": "desk", "theme": "School" },
-        { "word": "homework", "theme": "School" },
-        { "word": "bell", "theme": "School" },
-        { "word": "computer", "theme": "School" }
-      ],
-      "verb": [
-        { "word": "reads", "theme": "School" },
-        { "word": "writes", "theme": "School" },
-        { "word": "learns", "theme": "School" },
-        { "word": "studies", "theme": "School" },
-        { "word": "teaches", "theme": "School" },
-        { "word": "explains", "theme": "School" },
-        { "word": "answers", "theme": "School" }
-      ],
-      "adjective": [
-        { "word": "smart", "theme": "School" },
-        { "word": "hard", "theme": "School" },
-        { "word": "easy", "theme": "School" },
-        { "word": "busy", "theme": "School" },
-        { "word": "loud", "theme": "School" },
-        { "word": "quiet", "theme": "School" }
-      ],
-      "adverb": [
-        { "word": "carefully", "theme": "School" },
-        { "word": "quickly", "theme": "School" },
-        { "word": "well", "theme": "School" }
-      ]
-    },
-    "Space": {
-      "noun": [
-        { "word": "planet", "theme": "Space" },
-        { "word": "star", "theme": "Space" },
-        { "word": "galaxy", "theme": "Space" },
-        { "word": "rocket", "theme": "Space" },
-        { "word": "astronaut", "theme": "Space" },
-        { "word": "moon", "theme": "Space" },
-        { "word": "sun", "theme": "Space" },
-        { "word": "comet", "theme": "Space" }
-      ],
-      "verb": [
-        { "word": "orbits", "theme": "Space" },
-        { "word": "travels", "theme": "Space" },
-        { "word": "shines", "theme": "Space" },
-        { "word": "explores", "theme": "Space" },
-        { "word": "launches", "theme": "Space" }
-      ],
-      "adjective": [
-        { "word": "vast", "theme": "Space" },
-        { "word": "dark", "theme": "Space" },
-        { "word": "bright", "theme": "Space" },
-        { "word": "distant", "theme": "Space" },
-        { "word": "mysterious", "theme": "Space" }
-      ],
-      "adverb": [
-        { "word": "slowly", "theme": "Space" },
-        { "word": "quickly", "theme": "Space" },
-        { "word": "far", "theme": "Space" }
-      ]
-    },
-    "Weather": {
-      "noun": [
-        { "word": "sun", "theme": "Weather" },
-        { "word": "rain", "theme": "Weather" },
-        { "word": "snow", "theme": "Weather" },
-        { "word": "wind", "theme": "Weather" },
-        { "word": "storm", "theme": "Weather" },
-        { "word": "cloud", "theme": "Weather" },
-        { "word": "lightning", "theme": "Weather" }
-      ],
-      "verb": [
-        { "word": "shines", "theme": "Weather" },
-        { "word": "rains", "theme": "Weather" },
-        { "word": "snows", "theme": "Weather" },
-        { "word": "blows", "theme": "Weather" },
-        { "word": "thunders", "theme": "Weather" },
-        { "word": "strikes", "theme": "Weather" }
-      ],
-      "adjective": [
-        { "word": "sunny", "theme": "Weather" },
-        { "word": "cloudy", "theme": "Weather" },
-        { "word": "windy", "theme": "Weather" },
-        { "word": "rainy", "theme": "Weather" },
-        { "word": "cold", "theme": "Weather" },
-        { "word": "hot", "theme": "Weather" },
-        { "word": "stormy", "theme": "Weather" }
-      ],
-      "adverb": [
-        { "word": "brightly", "theme": "Weather" },
-        { "word": "gently", "theme": "Weather" },
-        { "word": "loudly", "theme": "Weather" }
-      ]
-    },
-    "Sports": {
-      "noun": [
-        { "word": "ball", "theme": "Sports" },
-        { "word": "player", "theme": "Sports" },
-        { "word": "team", "theme": "Sports" },
-        { "word": "goal", "theme": "Sports" },
-        { "word": "court", "theme": "Sports" },
-        { "word": "field", "theme": "Sports" },
-        { "word": "coach", "theme": "Sports" }
-      ],
-      "verb": [
-        { "word": "runs", "theme": "Sports" },
-        { "word": "jumps", "theme": "Sports" },
-        { "word": "throws", "theme": "Sports" },
-        { "word": "kicks", "theme": "Sports" },
-        { "word": "scores", "theme": "Sports" },
-        { "word": "wins", "theme": "Sports" }
-      ],
-      "adjective": [
-        { "word": "fast", "theme": "Sports" },
-        { "word": "strong", "theme": "Sports" },
-        { "word": "skilled", "theme": "Sports" },
-        { "word": "competitive", "theme": "Sports" },
-        { "word": "exciting", "theme": "Sports" }
-      ],
-      "adverb": [
-        { "word": "quickly", "theme": "Sports" },
-        { "word": "hard", "theme": "Sports" },
-        { "word": "well", "theme": "Sports" }
-      ]
-    },
-    "Music": {
-      "noun": [
-        { "word": "song", "theme": "Music" },
-        { "word": "guitar", "theme": "Music" },
-        { "word": "piano", "theme": "Music" },
-        { "word": "singer", "theme": "Music" },
-        { "word": "band", "theme": "Music" },
-        { "word": "drum", "theme": "Music" },
-        { "word": "concert", "theme": "Music" }
-      ],
-      "verb": [
-        { "word": "sings", "theme": "Music" },
-        { "word": "plays", "theme": "Music" },
-        { "word": "dances", "theme": "Music" },
-        { "word": "listens", "theme": "Music" },
-        { "word": "performs", "theme": "Music" }
-      ],
-      "adjective": [
-        { "word": "loud", "theme": "Music" },
-        { "word": "soft", "theme": "Music" },
-        { "word": "beautiful", "theme": "Music" },
-        { "word": "catchy", "theme": "Music" },
-        { "word": "melodic", "theme": "Music" }
-      ],
-      "adverb": [
-        { "word": "loudly", "theme": "Music" },
-        { "word": "softly", "theme": "Music" },
-        { "word": "beautifully", "theme": "Music" }
-      ]
+// A helpful constant to make your API key easily accessible and visible.
+// ⚠️ IMPORTANT: For production, do NOT store your API key in client-side code.
+// Consider using a secure backend to manage API calls.
+const GEMINI_API_KEY = '';
+const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+
+// Load words.json and initialize the application
+fetch('words.json')
+    .then(res => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+    })
+    .then(data => {
+        window.sentenceData = data;
+        const app = new SentenceBuilder();
+        app.init();
+    })
+    .catch(err => {
+        console.error('Failed to load words.json', err);
+        document.body.innerHTML = '<div class="flex items-center justify-center h-screen"><p class="text-xl text-red-500">Error: Could not load the word bank. Please try again later.</p></div>';
+    });
+
+/**
+ * Utility function to debounce a function.
+ * @param {Function} func The function to debounce.
+ * @param {number} wait The number of milliseconds to wait.
+ * @returns {Function} The debounced function.
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
+
+/**
+ * Utility function to throttle a function.
+ * @param {Function} func The function to throttle.
+ * @param {number} limit The number of milliseconds to limit calls to.
+ * @returns {Function} The throttled function.
+ */
+function throttle(func, limit) {
+    let inThrottle;
+    return function(...args) {
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+class SentenceBuilder {
+    constructor() {
+        this.allWords = window.sentenceData.words;
+        this.nextWordRules = window.sentenceData.nextWordRules;
+        this.typeColors = window.sentenceData.typeColors;
+        this.grammarTips = window.sentenceData.grammarTips;
+        this.state = {
+            sentenceWordsArray: [],
+            wordBank: [],
+            highFiveMode: false,
+            successCounter: 0,
+            isReducedFeedbackMode: false
+        };
+        this.elements = {};
+        this.debouncedFetchNextWords = debounce(this._fetchNextWords.bind(this), 250);
+        this.throttledFetchNextWords = throttle(this._fetchNextWords.bind(this), 500);
     }
-  },
-  "allWords": {
-    "noun": [
-      { "word": "house", "theme": null },
-      { "word": "cat", "theme": null },
-      { "word": "dog", "theme": null },
-      { "word": "sun", "theme": null },
-      { "word": "moon", "theme": null },
-      { "word": "book", "theme": null },
-      { "word": "ball", "theme": null },
-      { "word": "car", "theme": null },
-      { "word": "tree", "theme": null },
-      { "word": "flower", "theme": null },
-      { "word": "friend", "theme": null },
-      { "word": "teacher", "theme": null },
-      { "word": "boy", "theme": null },
-      { "word": "girl", "theme": null },
-      { "word": "baby", "theme": null },
-      { "word": "water", "theme": null },
-      { "word": "milk", "theme": null },
-      { "word": "toy", "theme": null },
-      { "word": "school", "theme": null },
-      { "word": "park", "theme": null },
-      { "word": "story", "theme": null },
-      { "word": "cookie", "theme": null },
-      { "word": "apple", "theme": null },
-      { "word": "bird", "theme": null },
-      { "word": "frog", "theme": null },
-      { "word": "fish", "theme": null },
-      { "word": "rabbit", "theme": null },
-      { "word": "mom", "theme": null },
-      { "word": "dad", "theme": null },
-      { "word": "table", "theme": null },
-      { "word": "chair", "theme": null }
-    ],
-    "verb": [
-      { "word": "is", "theme": null },
-      { "word": "are", "theme": null },
-      { "word": "was", "theme": null },
-      { "word": "were", "theme": null },
-      { "word": "run", "theme": null },
-      { "word": "runs", "theme": null },
-      { "word": "jump", "theme": null },
-      { "word": "jumps", "theme": null },
-      { "word": "eat", "theme": null },
-      { "word": "eats", "theme": null },
-      { "word": "play", "theme": null },
-      { "word": "plays", "theme": null },
-      { "word": "go", "theme": null },
-      { "word": "goes", "theme": null },
-      { "word": "sing", "theme": null },
-      { "word": "sings", "theme": null },
-      { "word": "sleep", "theme": null },
-      { "word": "sleeps", "theme": null },
-      { "word": "like", "theme": null },
-      { "word": "likes", "theme": null },
-      { "word": "see", "theme": null },
-      { "word": "sees", "theme": null },
-      { "word": "read", "theme": null },
-      { "word": "reads", "theme": null },
-      { "word": "write", "theme": null },
-      { "word": "writes", "theme": null },
-      { "word": "look", "theme": null },
-      { "word": "looks", "theme": null },
-      { "word": "have", "theme": null },
-      { "word": "has", "theme": null }
-    ],
-    "adjective": [
-      { "word": "happy", "theme": null },
-      { "word": "sad", "theme": null },
-      { "word": "big", "theme": null },
-      { "word": "small", "theme": null },
-      { "word": "red", "theme": null },
-      { "word": "blue", "theme": null },
-      { "word": "green", "theme": null },
-      { "word": "yellow", "theme": null },
-      { "word": "fast", "theme": null },
-      { "word": "slow", "theme": null },
-      { "word": "tall", "theme": null },
-      { "word": "short", "theme": null },
-      { "word": "soft", "theme": null },
-      { "word": "hard", "theme": null },
-      { "word": "loud", "theme": null },
-      { "word": "quiet", "theme": null },
-      { "word": "kind", "theme": null },
-      { "word": "nice", "theme": null },
-      { "word": "old", "theme": null },
-      { "word": "new", "theme": null }
-    ],
-    "adverb": [
-      { "word": "happily", "theme": null },
-      { "word": "sadly", "theme": null },
-      { "word": "quickly", "theme": null },
-      { "word": "slowly", "theme": null },
-      { "word": "loudly", "theme": null },
-      { "word": "quietly", "theme": null },
-      { "word": "well", "theme": null },
-      { "word": "carefully", "theme": null }
-    ],
-    "preposition": [
-      { "word": "in", "theme": null },
-      { "word": "on", "theme": null },
-      { "word": "at", "theme": null },
-      { "word": "to", "theme": null },
-      { "word": "from", "theme": null },
-      { "word": "with", "theme": null },
-      { "word": "by", "theme": null },
-      { "word": "for", "theme": null },
-      { "word": "of", "theme": null },
-      { "word": "about", "theme": null },
-      { "word": "over", "theme": null },
-      { "word": "under", "theme": null },
-      { "word": "through", "theme": null }
-    ],
-    "pronoun": [
-      { "word": "he", "theme": null },
-      { "word": "she", "theme": null },
-      { "word": "it", "theme": null },
-      { "word": "they", "theme": null },
-      { "word": "we", "theme": null },
-      { "word": "you", "theme": null },
-      { "word": "I", "theme": null },
-      { "word": "me", "theme": null },
-      { "word": "him", "theme": null },
-      { "word": "her", "theme": null },
-      { "word": "them", "theme": null }
-    ],
-    "conjunction": [
-      { "word": "and", "theme": null },
-      { "word": "but", "theme": null },
-      { "word": "or", "theme": null },
-      { "word": "so", "theme": null },
-      { "word": "because", "theme": null },
-      { "word": "while", "theme": null },
-      { "word": "yet", "theme": null },
-      { "word": "nor", "theme": null }
-    ],
-    "determiner": [
-      { "word": "a", "theme": null },
-      { "word": "an", "theme": null },
-      { "word": "the", "theme": null },
-      { "word": "this", "theme": null },
-      { "word": "that", "theme": null },
-      { "word": "these", "theme": null },
-      { "word": "those", "theme": null },
-      { "word": "some", "theme": null },
-      { "word": "any", "theme": null },
-      { "word": "many", "theme": null },
-      { "word": "much", "theme": null },
-      { "word": "few", "theme": null },
-      { "word": "a lot of", "theme": null },
-      { "word": "enough", "theme": null }
-    ],
-    "punctuation": [
-      { "word": ".", "theme": null },
-      { "word": "!", "theme": null },
-      { "word": "?", "theme": null }
-    ]
-  },
-  "nextWordRules": {
-    "start": ["determiner", "pronoun", "noun", "adjective", "adverb"],
-    "noun": ["verb", "adjective", "preposition", "conjunction", "adverb"],
-    "verb": ["determiner", "noun", "adjective", "preposition", "conjunction", "adverb", "punctuation"],
-    "adjective": ["noun"],
-    "adverb": ["verb", "adjective", "adverb"],
-    "preposition": ["determiner", "noun", "pronoun", "adjective"],
-    "conjunction": ["determiner", "pronoun", "noun", "adjective", "adverb"],
-    "determiner": ["noun", "adjective"],
-    "pronoun": ["verb"],
-    "punctuation": []
-  }
+
+    init() {
+        this._getElements();
+        this._loadState();
+        this._setupEventListeners();
+        this._renderSentence();
+        this.throttledFetchNextWords();
+        this._updateInstructionText();
+        this._renderHighFiveButton();
+    }
+
+    _getElements() {
+        this.elements = {
+            sentenceDisplay: document.getElementById('sentenceDisplay'),
+            wordBankContainer: document.getElementById('wordBankContainer'),
+            nextSentenceBtn: document.getElementById('nextSentenceBtn'),
+            highFiveBtn: document.getElementById('highFiveBtn'),
+            goBackBtn: document.getElementById('goBackBtn'),
+            clearBtn: document.getElementById('clearBtn'),
+            readAloudBtn: document.getElementById('readAloudBtn'),
+            messageBox: document.getElementById('messageBox'),
+            sentencesCounter: document.getElementById('sentencesCounter'),
+            shuffleWordsBtn: document.getElementById('shuffleWordsBtn'),
+            reducedFeedbackToggle: document.getElementById('reducedFeedbackToggle'),
+            currentWordCount: document.getElementById('currentWordCount')
+        };
+    }
+
+    _setupEventListeners() {
+        this.elements.wordBankContainer.addEventListener('click', this._handleWordClick.bind(this));
+        this.elements.nextSentenceBtn.addEventListener('click', this._completeSentence.bind(this));
+        this.elements.highFiveBtn.addEventListener('click', this._completeSentence.bind(this));
+        this.elements.goBackBtn.addEventListener('click', this._goBack.bind(this));
+        this.elements.clearBtn.addEventListener('click', this._clearSentence.bind(this));
+        this.elements.readAloudBtn.addEventListener('click', this._readSentenceAloud.bind(this));
+        this.elements.shuffleWordsBtn.addEventListener('click', this.throttledFetchNextWords.bind(this));
+        this.elements.reducedFeedbackToggle.addEventListener('change', this._handleReducedFeedbackToggle.bind(this));
+    }
+
+    _saveState() {
+        localStorage.setItem('sentenceBuilderState', JSON.stringify(this.state));
+    }
+
+    _loadState() {
+        const savedState = JSON.parse(localStorage.getItem('sentenceBuilderState'));
+        if (savedState) {
+            this.state = savedState;
+            this.elements.sentencesCounter.textContent = this.state.successCounter;
+            this.elements.reducedFeedbackToggle.checked = this.state.isReducedFeedbackMode;
+        }
+    }
+
+    _fetchNextWords() {
+        const lastWordType = this.state.sentenceWordsArray.length > 0 ? this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1].type : 'start';
+        const validNextTypes = this.nextWordRules[lastWordType] || [];
+        
+        let validWords = [];
+        validNextTypes.forEach(type => {
+            validWords.push(...this.allWords[type]);
+        });
+        
+        // Shuffle and take a random sample of 25 words to display
+        this.state.wordBank = this._shuffleArray(validWords).slice(0, 25);
+        this._renderWordBank();
+    }
+
+    _renderWordBank() {
+        this.elements.wordBankContainer.innerHTML = '';
+        this.state.wordBank.forEach(wordObj => {
+            const wordButton = document.createElement('button');
+            wordButton.textContent = wordObj.word;
+            wordButton.dataset.type = wordObj.type;
+            wordButton.dataset.word = wordObj.word;
+            wordButton.className = `word-button base-button squircle ${this.typeColors[wordObj.type] || this.typeColors.other}`;
+            wordButton.title = this.grammarTips[wordObj.type];
+            this.elements.wordBankContainer.appendChild(wordButton);
+        });
+    }
+
+    _handleWordClick(event) {
+        const { target } = event;
+        if (target.matches('.word-button')) {
+            const word = target.dataset.word;
+            const type = target.dataset.type;
+
+            this.state.sentenceWordsArray.push({ word, type });
+            this._renderSentence();
+            this._saveState();
+
+            if (!this.state.isReducedFeedbackMode) {
+                this.throttledFetchNextWords();
+            } else {
+                this.debouncedFetchNextWords();
+            }
+
+            this._updateInstructionText();
+        }
+    }
+
+    _renderSentence() {
+        this.elements.sentenceDisplay.innerHTML = '';
+        if (this.state.sentenceWordsArray.length === 0) {
+            this.elements.sentenceDisplay.innerHTML = '<span class="placeholder-text">Build your sentence here...</span>';
+        }
+        this.state.sentenceWordsArray.forEach((wordObj, index) => {
+            const span = document.createElement('span');
+            span.textContent = wordObj.word;
+            span.className = `sentence-word ${this.typeColors[wordObj.type] || this.typeColors.other}`;
+            span.dataset.index = index;
+            this.elements.sentenceDisplay.appendChild(span);
+
+            // Add space unless it's the last word and a punctuation mark
+            if (index < this.state.sentenceWordsArray.length - 1 && wordObj.type !== 'punctuation' && this.state.sentenceWordsArray[index + 1].type !== 'punctuation') {
+                const space = document.createTextNode(' ');
+                this.elements.sentenceDisplay.appendChild(space);
+            }
+        });
+        this.elements.currentWordCount.textContent = this.state.sentenceWordsArray.length;
+        this._renderHighFiveButton();
+    }
+    
+    _renderHighFiveButton() {
+        const isComplete = this.state.sentenceWordsArray.length > 0 && this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1].type === 'punctuation';
+        this.elements.highFiveBtn.disabled = !isComplete;
+        this.state.highFiveMode = isComplete;
+    }
+
+    _goBack() {
+        this.state.sentenceWordsArray.pop();
+        this._saveState();
+        this._renderSentence();
+        this.debouncedFetchNextWords();
+        this._updateInstructionText();
+    }
+
+    _readSentenceAloud() {
+        const sentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
+        if (sentence.length > 0) {
+            const utterance = new SpeechSynthesisUtterance(sentence);
+            utterance.lang = 'en-US';
+            speechSynthesis.speak(utterance);
+        }
+    }
+
+    _clearSentence() {
+        this.state.sentenceWordsArray = [];
+        this.state.highFiveMode = false;
+        this._renderSentence();
+        this.debouncedFetchNextWords();
+        this._updateInstructionText();
+        this._saveState();
+    }
+
+    _completeSentence() {
+        this.state.successCounter++;
+        this.elements.sentencesCounter.textContent = this.state.successCounter;
+        this._saveState();
+        this._showMessage('Sentence complete! Nicely done.', 'success');
+        this.state.sentenceHistory.push(this.state.sentenceWordsArray);
+        this.state.sentenceWordsArray = [];
+        this._renderSentence();
+        this.debouncedFetchNextWords();
+    }
+
+    _handleReducedFeedbackToggle(event) {
+        this.state.isReducedFeedbackMode = event.target.checked;
+        localStorage.setItem('reducedFeedbackMode', this.state.isReducedFeedbackMode);
+    }
+    
+    _updateInstructionText() {
+        const sentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
+        const isComplete = this.state.sentenceWordsArray.length > 0 && this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1].type === 'punctuation';
+        const messageBox = this.elements.messageBox;
+
+        if (isComplete) {
+            messageBox.innerHTML = "Great job! The sentence is complete.";
+            messageBox.style.display = 'block';
+        } else if (this.state.sentenceWordsArray.length === 0) {
+            messageBox.innerHTML = "Let's start building a new sentence. Pick a word!";
+            messageBox.style.display = 'block';
+        } else {
+            const lastType = this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1].type;
+            const nextPossibleTypes = this.nextWordRules[lastType] || [];
+            
+            // Generate a descriptive tip
+            let tipText;
+            if (nextPossibleTypes.length > 0) {
+                const typeDescriptions = nextPossibleTypes.map(type => this.grammarTips[type]).filter(Boolean).join(' or ');
+                tipText = `Your next word can be a ${typeDescriptions}.`;
+            } else {
+                tipText = "The word bank is empty. Let's start a new sentence!";
+            }
+            
+            messageBox.innerHTML = tipText;
+            messageBox.style.display = 'block';
+        }
+    }
+
+    _showMessage(text, type) {
+        this.elements.messageBox.textContent = text;
+        this.elements.messageBox.className = `message-box visible ${type}`;
+        setTimeout(() => {
+            this.elements.messageBox.className = 'message-box';
+        }, 3000);
+    }
+
+    _shuffleArray(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex !== 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
 }
