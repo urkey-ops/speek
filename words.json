@@ -792,4 +792,17 @@
       { "word": "?", "theme": null }
     ]
   }
+},
+  "nextWordRules": {
+    "start": ["determiner", "pronoun", "noun", "adjective", "adverb"],
+    "noun": ["verb", "adjective", "preposition", "conjunction", "adverb"],
+    "verb": ["determiner", "adjective", "noun", "preposition", "adverb", "punctuation"],
+    "adjective": ["noun", "adverb"],
+    "adverb": ["verb", "adjective"],
+    "preposition": ["determiner", "pronoun", "noun"],
+    "conjunction": ["determiner", "pronoun", "noun", "adjective", "adverb"],
+    "determiner": ["adjective", "noun"],
+    "pronoun": ["verb", "preposition", "adverb"],
+    "punctuation": ["start"]
+  }
 }
