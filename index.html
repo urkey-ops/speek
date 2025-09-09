@@ -1,432 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kodi's Smart Sentence Lab</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentence Lab</title>
+    <!-- Load Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            box-sizing: border-box;
+        :root {
+            --font-main: 'Inter', sans-serif;
+            --font-display: 'Comic Neue', cursive;
         }
-
         body {
-            font-family: 'Avenir Next', 'Comic Sans MS', sans-serif;
-            background: #fef6e4;
-            margin: 0;
-            padding: 0;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            font-family: var(--font-main);
         }
-
-        header {
-            background: #288dbe;
-            padding: 1rem;
-            text-align: center;
-            font-size: 2rem;
-            font-weight: bold;
-            color: white;
-            border-bottom: 4px solid #1c6294;
+        .squircle {
+            border-radius: 2rem;
         }
-
-        main {
-            flex: 1;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        
-        #sentenceDisplay {
-            background: #fff;
-            border: 2px solid #8ecae6;
-            padding: 1rem;
-            min-height: 100px;
-            border-radius: 12px;
-            font-size: 1.5rem;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .sentence-word {
-            background: #8ecae6;
-            color: #023047;
-            padding: 0.75rem 1.25rem;
-            border-radius: 25px;
-            white-space: nowrap;
-            animation: pop-in 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-            font-weight: bold;
-        }
-
-        .word-bank-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        #wordCategory {
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #ffb703;
-            animation: fade-in 0.5s;
-        }
-
-        .word-bank {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            justify-content: center;
-            background: #fff;
-            padding: 1rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
         .word-button {
-            background: #ffb703;
-            color: #ffffff;
-            border: none;
-            padding: 1rem 1.5rem;
-            border-radius: 30px;
-            font-size: 1.25rem;
-            font-weight: bold;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            will-change: transform;
+            font-weight: bold;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
         }
-
         .word-button:hover {
-            background: #fb8500;
-            transform: translateY(-3px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            transform: scale(1.05);
         }
-
-        .word-button:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        .sentence-word {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            border-radius: 9999px;
+            font-size: 1.25rem;
+            font-family: var(--font-display);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease-in-out;
         }
-
-        .controls {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .control-button {
-            background: #219ebc;
-            border: none;
-            padding: 1rem 1.25rem;
-            font-size: 1.1rem;
-            color: white;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            font-weight: bold;
-        }
-
-        .control-button:hover {
-            background: #023047;
+        .sentence-word:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
         }
-
-        .control-button:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        .placeholder-text {
+            color: #9ca3af;
+            font-style: italic;
         }
-
-        #nextSentenceBtn {
-            background: #06d6a0;
-        }
-        
-        #nextSentenceBtn:hover {
-            background: #04a57b;
-        }
-
         .message-box {
-            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            visibility: hidden;
+            background-color: #f0fdf4;
+            color: #16a34a;
+            border: 2px solid #bbf7d0;
             padding: 1rem;
-            background: #d9ed92;
-            color: #386641;
-            border-radius: 10px;
-            display: none;
-            font-weight: bold;
-            animation: fade-in 0.3s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 1.5rem;
+            text-align: center;
         }
-        
-        .char-tip {
-            display: block;
-            margin-top: 0.5rem;
-            font-size: 1.1rem;
-            color: #555;
-        }
-
-        .char-tip strong {
-            color: #219ebc;
-        }
-
-        /* Confetti and animations */
-        .confetti {
-            position: fixed;
-            top: 0;
-            left: 50%;
-            width: 10px;
-            height: 10px;
-            background: #ff6f61;
-            animation: fall 1s ease-out forwards;
-            opacity: 0.9;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 999;
-        }
-
-        @keyframes fall {
-            to {
-                transform: translateY(100vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        @keyframes pop-in {
-            0% { transform: scale(0.5); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        @keyframes fade-in {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* Mobile enhancements */
-        @media (max-width: 600px) {
-            .word-button, .control-button {
-                width: calc(50% - 0.5rem);
-            }
-            .word-button {
-                padding: 1.2rem 1rem;
-                font-size: 1.1rem;
-            }
-            #sentenceDisplay {
-                font-size: 1.25rem;
-            }
+        .message-box.visible {
+            opacity: 1;
+            visibility: visible;
         }
     </style>
 </head>
-<body>
-    <header>
-        Kodi's Smart Sentence Lab
-    </header>
-    <main>
-        <div class="sentence-display" id="sentenceDisplay"></div>
-        <div class="word-bank-container">
-            <div id="wordCategory"></div>
-            <div class="word-bank" id="wordBank"></div>
+<body class="bg-gray-100 min-h-screen flex flex-col justify-center items-center p-4">
+
+    <main class="w-full max-w-5xl bg-white shadow-xl rounded-3xl p-6 md:p-10 flex flex-col gap-8">
+        <!-- Header Section -->
+        <header class="text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-blue-800" style="font-family: var(--font-display);">
+                Sentence Lab <i class="fa-solid fa-flask text-blue-600"></i>
+            </h1>
+            <p class="text-md md:text-lg text-gray-500 mt-2">
+                Create sentences by picking words. Watch your grammar skills grow!
+            </p>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="flex flex-col gap-6">
+
+            <!-- Sentence Display Area -->
+            <div id="sentenceDisplay" class="bg-gray-50 border-2 border-dashed border-gray-300 min-h-[120px] rounded-2xl p-6 flex flex-wrap items-center justify-center text-center text-2xl font-bold text-gray-700">
+                <span class="placeholder-text">Build your sentence here...</span>
+            </div>
+
+            <!-- Action Buttons and Message Box -->
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="message-box w-full" id="messageBox"></div>
+
+                <div class="flex items-center gap-2">
+                    <button id="goBackBtn" class="bg-red-400 text-white p-3 rounded-full shadow-lg hover:bg-red-500 transition-transform transform hover:scale-110">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <button id="clearBtn" class="bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-red-700 transition-transform transform hover:scale-110">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+
+                <!-- High-Five Button -->
+                <button id="highFiveBtn" class="bg-green-500 text-white font-bold py-4 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                    High-Five!
+                </button>
+
+                <div class="flex items-center gap-2">
+                    <button id="readAloudBtn" class="bg-sky-400 text-white p-3 rounded-full shadow-lg hover:bg-sky-500 transition-transform transform hover:scale-110">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                    <button id="shuffleWordsBtn" class="bg-yellow-400 text-white p-3 rounded-full shadow-lg hover:bg-yellow-500 transition-transform transform hover:scale-110">
+                        <i class="fa-solid fa-shuffle"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats & Toggles -->
+            <div class="flex flex-wrap justify-center md:justify-around items-center gap-4 text-center text-gray-600 font-bold text-lg">
+                <div class="p-2 md:p-4 rounded-lg bg-gray-200">
+                    <span id="currentWordCount">0</span> words
+                </div>
+                <div class="p-2 md:p-4 rounded-lg bg-gray-200">
+                    <span id="sentencesCounter">0</span> sentences
+                </div>
+                <div class="flex items-center gap-2 p-2 md:p-4 rounded-lg bg-gray-200">
+                    <label for="reducedFeedbackToggle" class="cursor-pointer select-none">Reduced Feedback</label>
+                    <input type="checkbox" id="reducedFeedbackToggle" class="form-checkbox h-5 w-5 text-blue-600 rounded-full border-gray-300 focus:ring-blue-500 transition-colors">
+                </div>
+            </div>
+            
+            <!-- Word Bank Container -->
+            <div id="wordBankContainer" class="bg-gray-100 p-6 rounded-2xl border-2 border-gray-200 flex flex-wrap justify-center gap-3 md:gap-4">
+                <!-- Word buttons will be inserted here by JavaScript -->
+            </div>
         </div>
-        <div class="controls">
-            <button class="control-button" onclick="goBack()">
-                ↩️ Undo
-            </button>
-            <button class="control-button" onclick="readAloud()">
-                🔊 Read Aloud
-            </button>
-            <button class="control-button" onclick="showInfo()">
-                🤔 I need a hint
-            </button>
-            <button class="control-button" onclick="shuffleWords()">
-                🔀 Shuffle Words
-            </button>
-        </div>
-        <div class="message-box" id="messageBox"></div>
-        <button id="nextSentenceBtn" class="control-button" style="display: none;" onclick="startNewSentence()">
-            ✅ Next Lesson
-        </button>
     </main>
 
-    <script>
-        const grammarTips = {
-            noun: { char: "Kodi 🐻", tip: "A **noun** is a person, place, or thing!" },
-            verb: { char: "Peck 🐦", tip: "A **verb** shows an action!" },
-            adjective: { char: "Sandy 🦝", tip: "An **adjective** describes a noun!" },
-            adverb: { char: "Ollie 🐘", tip: "An **adverb** describes how an action happens!" },
-            punctuation: { char: "Reya 🐼", tip: "**Punctuation** ends a sentence. Great job!" }
-        };
-
-        const nextStepTips = {
-            start: "Kodi wants you to start with a **noun**!",
-            noun: "Peck needs a **verb** to show what the noun is doing!",
-            verb: "Ollie is waiting for an **adverb** to describe the action!",
-            adverb: "Sandy wants you to add an **adjective** to describe the noun!",
-            adjective: "Reya says it's time for **punctuation** to finish your sentence!"
-        };
-
-        const praiseMessages = [
-            "Awesome job! 🎉 You're a sentence superstar! 🌟",
-            "Great work! 🚀 Ready for the next one?",
-            "You did it! Keep building! 💪",
-            "Fantastic! You're a natural. ✨"
-        ];
-        
-        let sentence = [];
-        let sentenceTypes = [];
-        let currentCategory = "noun";
-        let lastPrompt = "";
-
-        const wordBankDiv = document.getElementById("wordBank");
-        const sentenceDisplay = document.getElementById("sentenceDisplay");
-        const messageBox = document.getElementById("messageBox");
-        const wordCategoryTitle = document.getElementById("wordCategory");
-
-        function throttle(func, delay) {
-            let timeoutId;
-            return function(...args) {
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(() => {
-                    func.apply(this, args);
-                }, delay);
-            };
-        }
-
-        const throttledUpdateWordBank = throttle(async () => {
-            const nextCategory = getNextCategory(sentenceTypes.length > 0 ? sentenceTypes[sentenceTypes.length - 1] : "start");
-            currentCategory = nextCategory;
-
-            const prompt = `You are an assistant helping a young child build simple, correct sentences. Given the current sentence fragment below, suggest three suitable, age-appropriate next words or phrases that could logically continue the sentence. The suggestions must be simple, suitable for a 1st grader, and must only contain words that are common and easy to read. You must only respond with a JSON array of strings, with each string being a single word or a short phrase. Do not include any other text, explanations, or conversational filler before or after the JSON. Current sentence fragment: "${sentence.join(" ")}". Suggestions:`;
-
-            if (prompt === lastPrompt && sentence.length > 0) {
-                 return;
-            }
-            lastPrompt = prompt;
-
-            try {
-                const response = await fetch('/get-words', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: prompt, currentSentence: sentence.join(" ") })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Server error: ${response.status}`);
-                }
-
-                const newWords = await response.json();
-                renderWordBank(newWords, nextCategory);
-
-            } catch (error) {
-                console.error("Error fetching words:", error);
-                showMessage("I'm having a little trouble finding words right now. Let's try shuffling!");
-            }
-        }, 500);
-
-        function renderWordBank(words, category) {
-            wordBankDiv.innerHTML = "";
-            const categoryTip = nextStepTips[sentenceTypes.length > 0 ? sentenceTypes[sentenceTypes.length - 1] : "start"];
-            wordCategoryTitle.innerHTML = `${grammarTips[category].char} <span class="char-tip">${categoryTip}</span>`;
-            
-            words.forEach(word => {
-                const btn = document.createElement("button");
-                btn.className = "word-button";
-                btn.textContent = word;
-                btn.onclick = () => addWord(word, category);
-                wordBankDiv.appendChild(btn);
-            });
-        }
-
-        function addWord(word, category) {
-            sentence.push(word);
-            sentenceTypes.push(category);
-            renderSentence();
-            if (category === "punctuation") {
-                triggerConfetti();
-                const randomMessage = praiseMessages[Math.floor(Math.random() * praiseMessages.length)];
-                showMessage(randomMessage);
-                document.getElementById("nextSentenceBtn").style.display = "inline-block";
-            } else {
-                throttledUpdateWordBank();
-            }
-        }
-
-        function getNextCategory(lastCategory) {
-            const categories = ["noun", "verb", "adjective", "adverb", "punctuation"];
-            const lastIndex = categories.indexOf(lastCategory);
-            return categories[(lastIndex + 1) % categories.length];
-        }
-
-        function renderSentence() {
-            sentenceDisplay.innerHTML = "";
-            sentence.forEach(word => {
-                const wordSpan = document.createElement("span");
-                wordSpan.className = "sentence-word";
-                wordSpan.textContent = word;
-                sentenceDisplay.appendChild(wordSpan);
-            });
-        }
-
-        function goBack() {
-            if (sentence.length > 0) {
-                sentence.pop();
-                sentenceTypes.pop();
-                renderSentence();
-                throttledUpdateWordBank();
-                document.getElementById("nextSentenceBtn").style.display = "none";
-            }
-        }
-
-        function readAloud() {
-            const msg = new SpeechSynthesisUtterance(sentence.join(" "));
-            window.speechSynthesis.speak(msg);
-        }
-
-        function showInfo() {
-            const lastType = sentenceTypes.length > 0 ? sentenceTypes[sentenceTypes.length - 1] : "start";
-            const message = nextStepTips[lastType];
-            showMessage(`${grammarTips[currentCategory].char} <span class="char-tip">${message}</span>`);
-        }
-
-        function showMessage(text) {
-            messageBox.innerHTML = text;
-            messageBox.style.display = "block";
-            setTimeout(() => {
-                messageBox.style.display = "none";
-            }, 4000);
-        }
-
-        function triggerConfetti() {
-            for (let i = 0; i < 20; i++) {
-                const confetti = document.createElement("div");
-                confetti.className = "confetti";
-                confetti.style.left = Math.random() * 100 + "vw";
-                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 80%, 60%)`;
-                document.body.appendChild(confetti);
-                setTimeout(() => confetti.remove(), 1000);
-            }
-        }
-
-        function startNewSentence() {
-            sentence = [];
-            sentenceTypes = [];
-            throttledUpdateWordBank();
-            showMessage("Let's build a new sentence!");
-            document.getElementById("nextSentenceBtn").style.display = "none";
-        }
-        
-        function shuffleWords() {
-            throttledUpdateWordBank();
-        }
-
-        throttledUpdateWordBank();
-    </script>
+    <!-- The script for the application -->
+    <script src="script.js"></script>
 </body>
 </html>
