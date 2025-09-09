@@ -791,8 +791,7 @@
       { "word": "!", "theme": null },
       { "word": "?", "theme": null }
     ]
-  }
-},
+  },
   "nextWordRules": {
     "start": ["determiner", "pronoun", "noun", "adjective", "adverb"],
     "noun": ["verb", "adjective", "preposition", "conjunction", "adverb"],
@@ -804,5 +803,5 @@
     "determiner": ["adjective", "noun"],
     "pronoun": ["verb", "preposition", "adverb"],
     "punctuation": ["start"]
-  }
+}
 
