@@ -1,12 +1,8 @@
 // A helpful constant to make your API key easily accessible and visible.
-// ⚠️ IMPORTANT: Replace 'YOUR_GEMINI_API_KEY' with your actual key.
-//const GEMINI_API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
-
-// A helpful constant to make your API key easily accessible and visible.
 // ⚠️ IMPORTANT: For production, do NOT store your API key in client-side code.
 // Consider using a secure backend to manage API calls.
-//const GEMINI_API_KEY = '';
-//const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_API_KEY = '';
+const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
 
 // Load words.json and initialize the application
 fetch('words.json')
@@ -89,7 +85,6 @@ class SentenceBuilder {
         this.elements = {
             sentenceDisplay: document.getElementById('sentenceDisplay'),
             wordBankContainer: document.getElementById('wordBankContainer'),
-            nextSentenceBtn: document.getElementById('nextSentenceBtn'),
             highFiveBtn: document.getElementById('highFiveBtn'),
             goBackBtn: document.getElementById('goBackBtn'),
             clearBtn: document.getElementById('clearBtn'),
@@ -104,7 +99,6 @@ class SentenceBuilder {
 
     _setupEventListeners() {
         this.elements.wordBankContainer.addEventListener('click', this._handleWordClick.bind(this));
-        this.elements.nextSentenceBtn.addEventListener('click', this._completeSentence.bind(this));
         this.elements.highFiveBtn.addEventListener('click', this._completeSentence.bind(this));
         this.elements.goBackBtn.addEventListener('click', this._goBack.bind(this));
         this.elements.clearBtn.addEventListener('click', this._clearSentence.bind(this));
