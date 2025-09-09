@@ -1,18 +1,40 @@
-// Load words.json and initialize the application
-fetch('words.json')
-  .then(res => {
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    return res.json();
-  })
-  .then(data => {
-    window.sentenceData = data;
-    const app = new SentenceBuilder();
-    app.init();
-  })
-  .catch(err => {
-    console.error('Failed to load words.json', err);
-    document.body.innerHTML = '<div class="flex items-center justify-center h-screen"><p class="text-xl text-red-500">Error: Could not load the word bank. Please try again later.</p></div>';
-  });
+// This is the main application file for the Sentence Lab.
+// This version is designed to connect to the Gemini API.
+
+// -------------------------------------------------------------
+// SECURE API KEY HANDLING
+// In a real application, a backend server should handle API keys.
+// For this demonstration, you can put your key here.
+// -------------------------------------------------------------
+const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
+
+const callGeminiAPI = async (prompt) => {
+  const API_ENDPOINT = `https://gemini-api.google.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+  
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`API returned an error: ${response.status} - ${errorData.error.message}`);
+    }
+
+    const data = await response.json();
+    return data;
+
+  } catch (error) {
+    console.error('API call failed:', error);
+    throw error;
+  }
+};
 
 /**
  * Utility function to debounce a function.
@@ -29,49 +51,27 @@ function debounce(func, wait) {
   };
 }
 
-/**
- * Utility function to throttle a function.
- * @param {Function} func The function to throttle.
- * @param {number} limit The number of milliseconds to limit calls to.
- * @returns {Function} The throttled function.
- */
-function throttle(func, limit) {
-  let inThrottle;
-  return function(...args) {
-    const context = this;
-    if (!inThrottle) {
-      func.apply(context, args);
-      inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
-    }
-  };
-}
-
 class SentenceBuilder {
   constructor() {
-    this.allWords = window.sentenceData.words;
-    this.nextWordRules = window.sentenceData.nextWordRules;
-    this.typeColors = window.sentenceData.typeColors;
-    this.grammarTips = window.sentenceData.grammarTips;
+    this.typeColors = {
+      "default": "bg-gray-300 text-gray-900",
+    };
+    this.fallbackWords = ["is", "the", "a", "and", "in", "it"];
     this.state = {
       sentenceWordsArray: [],
       wordBank: [],
-      highFiveMode: false,
       successCounter: 0,
+      topic: 'cat', // Default topic
     };
     this.elements = {};
-    this.debouncedFetchNextWords = debounce(this._fetchNextWords.bind(this), 250);
-    this.throttledFetchNextWords = throttle(this._fetchNextWords.bind(this), 500);
+    this.debouncedFetchNextWords = debounce(this._fetchNextWords.bind(this), 500);
   }
 
   init() {
     this._getElements();
-    this._loadState();
     this._setupEventListeners();
     this._renderSentence();
-    this.throttledFetchNextWords();
-    this._updateInstructionText();
-    this._renderHighFiveButton();
+    this._fetchNextWords();
   }
 
   _getElements() {
@@ -88,103 +88,63 @@ class SentenceBuilder {
   }
 
   _setupEventListeners() {
-    this.elements.wordBankContainer.addEventListener('click', this._handleWordClick.bind(this));
-    this.elements.goBackBtn.addEventListener('click', this._goBack.bind(this));
+    this.elements.wordBankContainer.addEventListener('click', (event) => {
+      if (event.target.matches('.word-button')) {
+        this._handleWordClick(event.target.textContent);
+      }
+    });
+    this.elements.goBackBtn.addEventListener('click', () => this._goBack());
     this.elements.clearBtn.addEventListener('click', () => this._clearSentence());
     this.elements.readAloudBtn.addEventListener('click', () => this._readSentenceAloud());
     this.elements.highFiveBtn.addEventListener('click', () => this._handleHighFiveClick());
     this.elements.shuffleWordsBtn.addEventListener('click', () => this._shuffleWords());
   }
 
-  _saveState() {
-    localStorage.setItem('sentenceBuilderState', JSON.stringify(this.state));
-  }
-
-  _loadState() {
-    const savedState = JSON.parse(localStorage.getItem('sentenceBuilderState'));
-    if (savedState) {
-      this.state = savedState;
-    }
-  }
-
-  _fetchNextWords() {
-    const WORD_LIMIT = 7;
-    const lastWordType = this.state.sentenceWordsArray.length > 0 ? this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1].type : 'start';
-    const validNextTypes = this.nextWordRules[lastWordType] || [];
-
-    this.state.wordBank = {};
-    validNextTypes.forEach(type => {
-      // Shuffle the words for the current type
-      const shuffledWordsOfType = this._shuffleArray([...this.allWords[type]]);
-      // Take a limited number of words
-      const limitedWords = shuffledWordsOfType.slice(0, WORD_LIMIT);
-
-      if (limitedWords.length > 0) {
-        this.state.wordBank[type] = limitedWords;
-      }
-    });
+  async _fetchNextWords() {
+    this.state.wordBank = this.fallbackWords;
     this._renderWordBank();
+    this._showMessage("Thinking...", 'bg-info');
+
+    try {
+        const currentSentence = this.state.sentenceWordsArray.join(' ');
+        const prompt = `You are a friendly teacher for a 1st grader. Provide 5-7 age-appropriate words to continue this sentence about a ${this.state.topic}. Current sentence: "${currentSentence}". Return the response as a simple comma-separated list of words, with no extra text.`;
+        
+        const response = await callGeminiAPI(prompt);
+        
+        // This line needs to be adjusted based on the actual API response format
+        const words = response.candidates[0].content.parts[0].text.trim().split(',').map(word => word.trim());
+        
+        if (words && words.length > 0) {
+            this.state.wordBank = words;
+            this._renderWordBank();
+        } else {
+            throw new Error('API response was empty or malformed.');
+        }
+
+    } catch (error) {
+      console.error('API call failed:', error);
+      this._showMessage('Oops! Something went wrong. Please try again.', 'bg-danger');
+    } finally {
+        this._updateInstructionText();
+    }
   }
 
   _renderWordBank() {
     this.elements.wordBankContainer.innerHTML = '';
-    const wordGroups = this.state.wordBank;
-    
-    // Check if the word bank is a single shuffled array
-    if (wordGroups.shuffled) {
-      const words = wordGroups.shuffled;
-      const groupContainer = document.createElement('div');
-      groupContainer.className = 'flex flex-wrap justify-center gap-4 w-full';
-      words.forEach(wordObj => {
-        const wordButton = document.createElement('button');
-        wordButton.textContent = wordObj.word;
-        wordButton.dataset.type = wordObj.type;
-        wordButton.dataset.word = wordObj.word;
-        wordButton.className = `word-button squircle ${this.typeColors[wordObj.type] || this.typeColors.other}`;
-        wordButton.title = this.grammarTips[wordObj.type];
-        groupContainer.appendChild(wordButton);
-      });
-      this.elements.wordBankContainer.appendChild(groupContainer);
-    } else {
-      // Original logic for rendering categorized words
-      const typeOrder = ["noun", "verb", "adjective", "adverb", "preposition", "determiner", "conjunction", "punctuation"];
-      typeOrder.forEach(type => {
-        const words = wordGroups[type];
-        if (words && words.length > 0) {
-          const heading = document.createElement('div');
-          heading.className = 'word-group-heading';
-          heading.textContent = type.charAt(0).toUpperCase() + type.slice(1) + 's';
-          this.elements.wordBankContainer.appendChild(heading);
-  
-          const groupContainer = document.createElement('div');
-          groupContainer.className = 'flex flex-wrap justify-center gap-4 w-full';
-          words.forEach(wordObj => {
-            const wordButton = document.createElement('button');
-            wordButton.textContent = wordObj.word;
-            wordButton.dataset.type = wordObj.type;
-            wordButton.dataset.word = wordObj.word;
-            wordButton.className = `word-button squircle ${this.typeColors[wordObj.type] || this.typeColors.other}`;
-            wordButton.title = this.grammarTips[wordObj.type];
-            groupContainer.appendChild(wordButton);
-          });
-          this.elements.wordBankContainer.appendChild(groupContainer);
-        }
-      });
-    }
+    this.state.wordBank.forEach(word => {
+      const wordButton = document.createElement('button');
+      wordButton.textContent = word;
+      wordButton.className = `word-button squircle ${this.typeColors.default}`;
+      this.elements.wordBankContainer.appendChild(wordButton);
+    });
   }
 
-  _handleWordClick(event) {
-    const { target } = event;
-    if (target.matches('.word-button')) {
-      const word = target.dataset.word;
-      const type = target.dataset.type;
-
-      this.state.sentenceWordsArray.push({ word, type });
-      this._renderSentence();
-      this._saveState();
-
-      this.debouncedFetchNextWords();
-      this._updateInstructionText();
+  _handleWordClick(word) {
+    const isPunctuation = ['.', '!', '?'].includes(word);
+    this.state.sentenceWordsArray.push(word);
+    this._renderSentence();
+    if (!isPunctuation) {
+        this.debouncedFetchNextWords();
     }
   }
 
@@ -193,37 +153,34 @@ class SentenceBuilder {
     if (this.state.sentenceWordsArray.length === 0) {
       this.elements.sentenceDisplay.innerHTML = '<span class="placeholder-text">Click on a word below to begin...</span>';
     }
-    this.state.sentenceWordsArray.forEach((wordObj, index) => {
+    this.state.sentenceWordsArray.forEach((word, index) => {
       const span = document.createElement('span');
-      span.textContent = wordObj.word;
-      span.className = `sentence-word ${this.typeColors[wordObj.type] || this.typeColors.other}`;
-      span.dataset.index = index;
+      span.textContent = word;
+      span.className = `sentence-word ${this.typeColors.default}`;
       this.elements.sentenceDisplay.appendChild(span);
 
-      if (index < this.state.sentenceWordsArray.length - 1 && wordObj.type !== 'punctuation' && this.state.sentenceWordsArray[index + 1].type !== 'punctuation') {
-        const space = document.createTextNode(' ');
-        this.elements.sentenceDisplay.appendChild(space);
+      const isPunctuation = ['.', '!', '?'].includes(word);
+      if (!isPunctuation && index < this.state.sentenceWordsArray.length - 1) {
+          this.elements.sentenceDisplay.appendChild(document.createTextNode(' '));
       }
     });
     this._renderHighFiveButton();
   }
 
   _renderHighFiveButton() {
-    const isComplete = this.state.sentenceWordsArray.length > 0 && this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1].type === 'punctuation';
+    const lastWord = this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1];
+    const isComplete = lastWord === '.' || lastWord === '!' || lastWord === '?';
     this.elements.highFiveBtn.disabled = !isComplete;
-    this.state.highFiveMode = isComplete;
   }
 
   _goBack() {
     this.state.sentenceWordsArray.pop();
-    this._saveState();
     this._renderSentence();
     this.debouncedFetchNextWords();
-    this._updateInstructionText();
   }
 
   _readSentenceAloud() {
-    const sentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
+    const sentence = this.state.sentenceWordsArray.join(' ');
     if (sentence.length > 0) {
       const utterance = new SpeechSynthesisUtterance(sentence);
       utterance.lang = 'en-US';
@@ -233,50 +190,38 @@ class SentenceBuilder {
 
   _clearSentence() {
     this.state.sentenceWordsArray = [];
-    this.state.highFiveMode = false;
     this._renderSentence();
     this.debouncedFetchNextWords();
-    this._updateInstructionText();
-    this._saveState();
   }
 
-  _handleHighFiveClick() {
-    const isComplete = this.state.sentenceWordsArray.length > 0 && this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1].type === 'punctuation';
-    if (isComplete) {
-      this._completeSentence();
-    } else {
-      this._showMessage('You need to finish the sentence with a punctuation mark!', 'bg-danger');
+  async _handleHighFiveClick() {
+    const currentSentence = this.state.sentenceWordsArray.join(' ');
+    const prompt = `You are a friendly teacher for a 1st grader. The current sentence is "${currentSentence}". Is it complete and correct? If so, respond with "Correct". If not, provide one simple, encouraging hint.`;
+    
+    try {
+      const response = await callGeminiAPI(prompt);
+      const feedback = response.candidates[0].content.parts[0].text;
+      
+      if (feedback.includes("Correct")) {
+        this._showMessage('Awesome! Great sentence! 🎉', 'bg-success');
+        this.state.sentenceWordsArray = [];
+        this._renderSentence();
+        this.debouncedFetchNextWords();
+      } else {
+        this._showMessage(feedback, 'bg-warning');
+      }
+    } catch (error) {
+      console.error('Validation API call failed:', error);
+      this._showMessage('Could not check your sentence. Please try again.', 'bg-danger');
     }
   }
 
-  _completeSentence() {
-    this.state.successCounter++;
-    this._saveState();
-    this._showMessage('Awesome! Great sentence!', 'bg-success');
-    this.state.sentenceWordsArray = [];
-    this._renderSentence();
-    this.debouncedFetchNextWords();
-  }
-
   _shuffleWords() {
-    // Flatten the word bank object into a single array
-    const allWords = Object.values(this.state.wordBank).flat();
-    // Shuffle the combined array
-    const shuffledWords = this._shuffleArray(allWords);
-    // Overwrite the wordBank with the shuffled words
-    this.state.wordBank = {
-      'shuffled': shuffledWords
-    };
-    this._renderWordBank();
-    this._saveState();
+    this._fetchNextWords();
   }
 
   _updateInstructionText() {
-    const isComplete = this.state.sentenceWordsArray.length > 0 && this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1].type === 'punctuation';
-
-    if (isComplete) {
-      this._showMessage("Great job! You finished a sentence! 🎉", 'bg-success');
-    } else if (this.state.sentenceWordsArray.length === 0) {
+    if (this.state.sentenceWordsArray.length === 0) {
       this._showMessage("Let's start building a sentence! Tap a word below. 👇", 'bg-info');
     } else {
       this._showMessage("Choose a word to add to your sentence!", 'bg-info');
@@ -289,15 +234,5 @@ class SentenceBuilder {
     setTimeout(() => {
       this.elements.messageBox.className = 'message-box';
     }, 3000);
-  }
-
-  _shuffleArray(array) {
-    let currentIndex = array.length, randomIndex;
-    while (currentIndex !== 0) {
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex--;
-      [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
-    }
-    return array;
   }
 }
