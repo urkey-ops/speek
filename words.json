@@ -39,16 +39,16 @@
     "pronoun": "A pronoun replaces a noun.",
     "determiner": "A determiner introduces a noun."
   },
-  "nextWordRules": {
+ "nextWordRules": {
     "start": ["determiner", "pronoun", "noun", "adjective", "adverb"],
     "noun": ["verb", "adjective", "preposition", "conjunction", "adverb"],
-    "verb": ["determiner", "adjective", "preposition", "conjunction", "adverb", "punctuation"],
-    "adjective": ["noun", "preposition"],
+    "verb": ["determiner", "noun", "adjective", "preposition", "conjunction", "adverb", "punctuation"],
+    "adjective": ["noun"],
     "adverb": ["verb", "adjective", "adverb"],
-    "preposition": ["determiner", "noun", "pronoun"],
+    "preposition": ["determiner", "noun", "pronoun", "adjective"],
     "conjunction": ["determiner", "pronoun", "noun", "adjective", "adverb"],
-    "pronoun": ["verb", "adverb"],
-    "determiner": ["adjective", "noun"],
+    "determiner": ["noun", "adjective"],
+    "pronoun": ["verb"],
     "punctuation": ["start"]
   },
   "words": {
