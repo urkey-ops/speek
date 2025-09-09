@@ -8,18 +8,20 @@
 // -------------------------------------------------------------
 const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
+
+//
+
 // This is the main application file for the Sentence Lab.
 // This version is designed to connect to the Gemini API.
 
 // -------------------------------------------------------------
 // SECURE API KEY HANDLING
-// In a real application, a backend server should handle API keys.
-// For this demonstration, you can put your key here.
 // -------------------------------------------------------------
 // const API_KEY = 'YOUR_API_KEY';
 
 const callGeminiAPI = async (prompt) => {
-  const API_ENDPOINT = `https://gemini-api.google.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+  // CORRECTED API ENDPOINT
+  const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
   
   try {
     const response = await fetch(API_ENDPOINT, {
@@ -62,7 +64,7 @@ function debounce(func, wait) {
 }
 
 // -------------------------------------------------------------
-// NEW HELPER FUNCTION TO FIND TEXT IN RESPONSE
+// HELPER FUNCTION TO FIND TEXT IN RESPONSE
 // This will search the entire JSON object for the text content.
 // -------------------------------------------------------------
 function findTextInResponse(obj) {
@@ -143,7 +145,6 @@ class SentenceBuilder {
         
         const response = await callGeminiAPI(prompt);
         
-        // Use the new helper function to find the text
         const wordsText = findTextInResponse(response);
         
         let words = [];
