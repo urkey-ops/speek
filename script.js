@@ -281,3 +281,4 @@ document.addEventListener('DOMContentLoaded', () => {
   const app = new SentenceBuilder();
   app.init();
 });
+}
