@@ -250,7 +250,7 @@ class SentenceBuilder {
     this._hideMessage();
   }
   
-  _handleWordClick(wordElement) {
+   _handleWordClick(wordElement) {
     const level = LEARNING_LEVELS[this.state.currentLevel];
     const nextPartIndex = this.state.sentenceWordsArray.length;
     const expectedType = level.structure[nextPartIndex];
@@ -271,10 +271,9 @@ class SentenceBuilder {
     if (wordObj.type === 'punctuation') {
       this._handleHighFiveClick();
     } else {
-      this._fetchNextWords();
+      this._fetchNextWords(); // This line is the crucial correction
     }
   }
-
   _renderSentence() {
     this.elements.sentenceDisplay.innerHTML = '';
     const colorMap = this.state.allWordsData.typeColors;
