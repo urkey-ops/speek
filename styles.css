@@ -135,4 +135,31 @@ to { opacity: 1; transform: translateY(0); }
   box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 }
+/* Add this to styles.css */
+.theme-button {
+  background-color: #ffffff;
+  border: 4px solid #e5e7eb;
+  border-radius: 1.5rem; /* squircle */
+  padding: 1rem 1.5rem;
+  font-size: 1.75rem;
+  font-weight: bold;
+  font-family: var(--font-display);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 6px 0 -2px rgba(0,0,0,0.1);
+  min-width: 150px;
+  text-align: center;
+}
+
+.theme-button:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 10px 0 -2px rgba(0,0,0,0.15);
+  border-color: #c7d2fe;
+}
+
+.theme-button .emoji {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
 
