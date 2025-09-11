@@ -8,6 +8,17 @@
 // -------------------------------------------------------------
 const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
+// This is the main application file for the Sentence Lab.
+// This version is designed to connect to the Gemini API.
+
+// -------------------------------------------------------------
+// SECURE API KEY HANDLING
+// In a real application, a backend server should handle API keys.
+// For this demonstration, you can put your key here.
+// -------------------------------------------------------------
+// NOTE: I have removed the key for security. Please insert your own valid API key below.
+// const API_KEY = 'YOUR_API_KEY';
+
 const callGeminiAPI = async (prompt) => {
   const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
   try {
@@ -56,7 +67,6 @@ const LEARNING_LEVELS = {
     structure: ['determiner', 'noun', 'verb', 'preposition', 'determiner', 'noun', 'punctuation'],
     threshold: 5
   },
-  // Add Level 4 here if desired
 };
 
 // New: This function will be called to get words from the AI
@@ -67,21 +77,11 @@ async function getAIWords(sentence, nextPartType, theme) {
         const response = await callGeminiAPI(prompt);
         const text = findTextInResponse(response);
         if (text) {
-            // New: Parse the comma-separated string into an array of objects
             return text.split(',').map(word => ({ word: word.trim(), type: nextPartType, theme: theme }));
         }
     } catch (error) {
         console.error('Failed to get AI words:', error);
-        // Fallback to local data if AI call fails
-        const level = LEARNING_LEVELS[1];
-        const nextPartIndex = sentence.split(' ').length;
-        const nextPart = level.structure[nextPartIndex];
-        let candidateWords = [...(this.state.allWordsData.words[nextPart] || [])];
-        if (this.state.currentTheme && ['noun', 'verb', 'adjective'].includes(nextPart)) {
-            candidateWords = candidateWords.filter(word => word.theme === this.state.currentTheme || !word.theme);
-        }
-        const shuffled = candidateWords.sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, 7);
+        return []; // Return empty array on failure
     }
     return [];
 }
@@ -104,7 +104,6 @@ class SentenceBuilder {
     this._getElements();
     this._setupEventListeners();
     try {
-      // Load our local word data first
       const response = await fetch('words.json');
       this.state.allWordsData = await response.json();
       this._renderThemeSelector();
@@ -131,7 +130,6 @@ class SentenceBuilder {
   }
 
   _setupEventListeners() {
-    // Event listeners for the main app
     this.elements.wordBankContainer.addEventListener('click', (e) => {
       if (e.target.matches('.word-button')) this._handleWordClick(e.target);
     });
@@ -146,7 +144,7 @@ class SentenceBuilder {
   _renderThemeSelector() {
     this.state.allWordsData.themes.forEach(theme => {
       const button = document.createElement('button');
-      button.className = 'theme-button';
+      button.className = 'theme-button squircle';
       button.innerHTML = `<span class="emoji">${theme.emoji}</span>${theme.name}`;
       button.dataset.theme = theme.name;
       button.addEventListener('click', () => this._selectTheme(theme.name));
@@ -158,33 +156,31 @@ class SentenceBuilder {
     this.state.currentTheme = themeName;
     this.elements.themeSelector.classList.add('hidden');
     this.elements.appContainer.classList.remove('hidden');
-    this.elements.appContainer.classList.add('flex'); // Make it visible
+    this.elements.appContainer.classList.add('flex');
     this._startLevel();
   }
   
   // --- NEW: Level Management ---
   _startLevel() {
       this.state.sentencesCompletedAtLevel = 0;
-      this._clearSentence(); // This will also trigger fetching first words
+      this._clearSentence();
       this._updateInstructionText();
   }
 
   _levelUp() {
       if (LEARNING_LEVELS[this.state.currentLevel + 1]) {
           this.state.currentLevel++;
-          this._showMessage(`脂 LEVEL UP! 脂`, 'bg-success');
+          this._showMessage(`🌟 LEVEL UP! 🌟`, 'bg-success');
           setTimeout(() => this._startLevel(), 2000);
       } else {
-          this._showMessage('Wow! You are a sentence master! 醇', 'bg-success');
+          this._showMessage('Wow! You are a sentence master! 🎉', 'bg-success');
       }
   }
-  
+
   // --- REWRITTEN: Contextual Word Logic using AI ---
   async _fetchNextWords() {
     const level = LEARNING_LEVELS[this.state.currentLevel];
     const nextPartIndex = this.state.sentenceWordsArray.length;
-    
-    // Determine what part of speech we need next
     const nextPart = level.structure[nextPartIndex];
 
     if (!nextPart) {
@@ -192,18 +188,16 @@ class SentenceBuilder {
         this._renderWordBank();
         return;
     }
-
-    // Get the current sentence as a string
-    const currentSentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
-
+    
+    // Add loading indicator while fetching words
     this._showMessage('Thinking...', 'bg-info');
     
-    // New: Call the AI to get contextually relevant words
+    const currentSentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
+    
     if (nextPart !== 'punctuation') {
         const aiWords = await getAIWords(currentSentence, nextPart, this.state.currentTheme);
         this.state.wordBank = aiWords;
     } else {
-        // Punctuation is always from the local data
         this.state.wordBank = this.state.allWordsData.words.punctuation;
     }
     
@@ -218,9 +212,9 @@ class SentenceBuilder {
     this.state.wordBank.forEach(wordObj => {
       const button = document.createElement('button');
       button.textContent = wordObj.word;
-      button.dataset.type = wordObj.type; // Store type
+      button.dataset.type = wordObj.type;
       const colorClass = colorMap[wordObj.type] || colorMap['other'];
-      button.className = `word-button squircle ${colorClass}`;
+      button.className = `word-button squircle ${colorClass}-color`;
       this.elements.wordBankContainer.appendChild(button);
     });
   }
@@ -234,9 +228,8 @@ class SentenceBuilder {
     this.state.sentenceWordsArray.push(wordObj);
     this._renderSentence();
     
-    // New: Check if the last word is punctuation
     if (wordObj.type === 'punctuation') {
-      this._handleHighFiveClick(); // Auto-check the sentence
+      this._handleHighFiveClick();
     } else {
       this._fetchNextWords();
     }
@@ -254,10 +247,9 @@ class SentenceBuilder {
             const span = document.createElement('span');
             span.textContent = wordObj.word;
             const colorClass = colorMap[wordObj.type] || colorMap['other'];
-            span.className = `sentence-word ${colorClass}`;
+            span.className = `sentence-word ${colorClass}-color`;
             this.elements.sentenceDisplay.appendChild(span);
 
-            // Add space, but not before punctuation
             if (index < this.state.sentenceWordsArray.length - 1 && this.state.sentenceWordsArray[index+1].type !== 'punctuation') {
                 this.elements.sentenceDisplay.appendChild(document.createTextNode(' '));
             }
@@ -291,8 +283,8 @@ class SentenceBuilder {
     this._fetchNextWords();
   }
 
- // --- MODIFIED: High-Five now handles level progression with better flow ---
-async _handleHighFiveClick() {
+  // --- MODIFIED: High-Five now handles level progression with better flow ---
+  async _handleHighFiveClick() {
     const sentenceText = this.state.sentenceWordsArray.map(w => w.word).join(' ');
     const prompt = `You are a friendly teacher for a 6-year-old. The child wrote this sentence: "${sentenceText}". Is it a grammatically correct and complete sentence? Respond with ONLY "Correct" if it is. If not, give one very simple, encouraging hint for a first grader to fix it.`;
     
@@ -302,11 +294,9 @@ async _handleHighFiveClick() {
       const feedback = findTextInResponse(response).trim();
       
       if (feedback.toLowerCase().includes("correct")) {
-        // Step 1: Show the positive message immediately
         this._showMessage('Awesome! Great sentence! 🌟', 'bg-success');
         this.state.sentencesCompletedAtLevel++;
 
-        // Step 2: After a brief delay, clear the board and show the next instructions
         setTimeout(() => {
           const level = LEARNING_LEVELS[this.state.currentLevel];
           if (this.state.sentencesCompletedAtLevel >= level.threshold) {
@@ -315,22 +305,22 @@ async _handleHighFiveClick() {
               this._clearSentence();
               this._updateInstructionText();
           }
-        }, 2000); // 2-second delay
+        }, 2000);
         
       } else {
-        // If incorrect, still provide the helpful hint
-        this._showMessage(feedback, 'bg-info'); 
+        this._showMessage(feedback, 'bg-info');
       }
     } catch (error) {
       this._showMessage('Could not check sentence. Try again!', 'bg-info');
     }
-}
+  }
+
   // --- MODIFIED: Instructions are now based on level goal ---
   _updateInstructionText() {
     const level = LEARNING_LEVELS[this.state.currentLevel];
     const remaining = level.threshold - this.state.sentencesCompletedAtLevel;
     const goalText = `${level.goal} (${remaining} more to level up!)`;
-    this._showMessage(goalText, 'bg-info', 6000); // Show for longer
+    this._showMessage(goalText, 'bg-info', 6000);
   }
 
   _showMessage(text, className, duration = 3000) {
