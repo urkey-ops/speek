@@ -117,5 +117,22 @@ animation: fadeIn 0.5s ease-out forwards;
 @keyframes fadeIn {
 from { opacity: 0; transform: translateY(20px); }
 to { opacity: 1; transform: translateY(0); }
+/* Add this to styles.css */
+.base-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem; /* Space between icon and text */
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-display);
+}
+
+.base-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
 }
 
