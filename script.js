@@ -276,3 +276,8 @@ class SentenceBuilder {
     }, 3000);
   }
 }
+// Add this to the end of script.js
+document.addEventListener('DOMContentLoaded', () => {
+  const app = new SentenceBuilder();
+  app.init();
+});
