@@ -18,16 +18,25 @@ const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 // -------------------------------------------------------------
 // const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
+// A simple cache to store API responses
 const apiCache = new Map();
 
 // Helper function to find the text content in the API response,
 // which can be nested.
 function findTextInResponse(obj) {
   if (typeof obj === 'string') return obj;
-  if (typeof obj === 'object' && obj !== null) {
-    for (const key in obj) {
-      const result = findTextInResponse(obj[key]);
+
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      const result = findTextInResponse(item);
       if (result) return result;
+    }
+  } else if (typeof obj === 'object' && obj !== null) {
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        const result = findTextInResponse(obj[key]);
+        if (result) return result;
+      }
     }
   }
   return null;
@@ -37,7 +46,7 @@ function findTextInResponse(obj) {
 const callGeminiAPI = async (prompt) => {
   const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
   
-  // Use a simple hash of the prompt as a cache key.
+  // Use the prompt as a unique key for the cache.
   const cacheKey = prompt; 
 
   // Check if the response is already in the cache.
@@ -127,7 +136,7 @@ class SentenceBuilder {
       this.state.allWordsData = await response.json();
       this._renderThemeSelector();
     } catch (error) {
-      console.error("Failed to load words.json:", error);
+    //   console.error("Failed to load words.json:", error);
       this.elements.themeSelector.innerHTML = `<h1 class="text-2xl text-red-600">Error: Could not load word data.</h1>`;
     }
   }
@@ -242,9 +251,19 @@ class SentenceBuilder {
   }
   
   _handleWordClick(wordElement) {
+    const level = LEARNING_LEVELS[this.state.currentLevel];
+    const nextPartIndex = this.state.sentenceWordsArray.length;
+    const expectedType = level.structure[nextPartIndex];
+    const selectedType = wordElement.dataset.type;
+
+    if (selectedType !== expectedType) {
+        this._showMessage("Oops! That's not the right kind of word. Try again!", 'bg-info');
+        return;
+    }
+
     const wordObj = {
       word: wordElement.textContent,
-      type: wordElement.dataset.type
+      type: selectedType
     };
     this.state.sentenceWordsArray.push(wordObj);
     this._renderSentence();
