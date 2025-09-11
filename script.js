@@ -102,7 +102,7 @@ async function _getWords(sentence, nextPartType, theme, allWordsData) {
         if (text) {
             const aiWords = text.split(',').map(word => ({ word: word.trim(), type: nextPartType }));
             if (aiWords.length > 0) {
-                return aiWords.filter(word => word.word.length > 0);
+                return { source: 'api', words: aiWords.filter(word => word.word.length > 0) };
             }
         }
     } catch (error) {
@@ -121,7 +121,7 @@ async function _getWords(sentence, nextPartType, theme, allWordsData) {
     
     // Shuffle and pick 4 words from the fallback list
     const shuffled = fallbackWords.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 4);
+    return { source: 'json', words: shuffled.slice(0, 4) };
 }
 
 
@@ -226,15 +226,18 @@ class SentenceBuilder {
 
     const currentSentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
 
-    const wordsToDisplay = await _getWords(currentSentence, nextPart, this.state.currentTheme, this.state.allWordsData);
+    const result = await _getWords(currentSentence, nextPart, this.state.currentTheme, this.state.allWordsData);
     
-    // Check if a fallback was used
-    const usingFallback = wordsToDisplay.some(word => word.word && this.state.allWordsData.words[word.type] && this.state.allWordsData.words[word.type].includes(word.word));
-    if (usingFallback) {
+    // Apply the correct background class based on the source of the words
+    this.elements.appContainer.classList.remove('bg-api', 'bg-json');
+    if (result.source === 'json') {
+        this.elements.appContainer.classList.add('bg-json');
         this._showMessage("Using backup words to keep playing! 👍", 'bg-info', 3000);
+    } else {
+        this.elements.appContainer.classList.add('bg-api');
     }
 
-    this.state.wordBank = wordsToDisplay;
+    this.state.wordBank = result.words;
     this._renderWordBank();
   }
 
