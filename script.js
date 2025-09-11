@@ -7,6 +7,7 @@
 // For this demonstration, you can put your key here.
 // -------------------------------------------------------------
 const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
+
 const callGeminiAPI = async (prompt) => {
   const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
   try {
@@ -57,6 +58,33 @@ const LEARNING_LEVELS = {
   },
   // Add Level 4 here if desired
 };
+
+// New: This function will be called to get words from the AI
+async function getAIWords(sentence, nextPartType, theme) {
+    const prompt = `You are a helpful language model assistant. Given the partial sentence "${sentence}", please suggest a list of 5-7 words that could come next. The next word should be a "${nextPartType}". If there is a theme, like "${theme}", try to suggest words related to it. Respond with ONLY a comma-separated list of lowercase words, like "word1, word2, word3".`;
+
+    try {
+        const response = await callGeminiAPI(prompt);
+        const text = findTextInResponse(response);
+        if (text) {
+            // New: Parse the comma-separated string into an array of objects
+            return text.split(',').map(word => ({ word: word.trim(), type: nextPartType, theme: theme }));
+        }
+    } catch (error) {
+        console.error('Failed to get AI words:', error);
+        // Fallback to local data if AI call fails
+        const level = LEARNING_LEVELS[1];
+        const nextPartIndex = sentence.split(' ').length;
+        const nextPart = level.structure[nextPartIndex];
+        let candidateWords = [...(this.state.allWordsData.words[nextPart] || [])];
+        if (this.state.currentTheme && ['noun', 'verb', 'adjective'].includes(nextPart)) {
+            candidateWords = candidateWords.filter(word => word.theme === this.state.currentTheme || !word.theme);
+        }
+        const shuffled = candidateWords.sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 7);
+    }
+    return [];
+}
 
 
 class SentenceBuilder {
@@ -150,9 +178,9 @@ class SentenceBuilder {
           this._showMessage('Wow! You are a sentence master! 醇', 'bg-success');
       }
   }
-
-  // --- REWRITTEN: Scaffolding Word Logic ---
-  _fetchNextWords() {
+  
+  // --- REWRITTEN: Contextual Word Logic using AI ---
+  async _fetchNextWords() {
     const level = LEARNING_LEVELS[this.state.currentLevel];
     const nextPartIndex = this.state.sentenceWordsArray.length;
     
@@ -160,28 +188,22 @@ class SentenceBuilder {
     const nextPart = level.structure[nextPartIndex];
 
     if (!nextPart) {
-        this.state.wordBank = []; // Sentence structure is complete, maybe just show punctuation
+        this.state.wordBank = [];
         this._renderWordBank();
         return;
     }
 
-    // Get all words of the required type
-    let candidateWords = [...(this.state.allWordsData.words[nextPart] || [])];
-    
-    // Filter by theme if the part of speech is a noun, verb, or adjective
-    if (this.state.currentTheme && ['noun', 'verb', 'adjective'].includes(nextPart)) {
-        const themeWords = candidateWords.filter(word => word.theme === this.state.currentTheme || !word.theme);
-        if(themeWords.length > 3) {
-            candidateWords = themeWords;
-        }
-    }
+    // Get the current sentence as a string
+    const currentSentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
 
-    // Shuffle and pick a few candidates (e.g., 5-7 words)
-    const shuffled = candidateWords.sort(() => 0.5 - Math.random());
-    this.state.wordBank = shuffled.slice(0, 7);
+    this._showMessage('Thinking...', 'bg-info');
     
-    // Ensure punctuation is always an option at the end
-    if (nextPart === 'punctuation') {
+    // New: Call the AI to get contextually relevant words
+    if (nextPart !== 'punctuation') {
+        const aiWords = await getAIWords(currentSentence, nextPart, this.state.currentTheme);
+        this.state.wordBank = aiWords;
+    } else {
+        // Punctuation is always from the local data
         this.state.wordBank = this.state.allWordsData.words.punctuation;
     }
     
@@ -203,6 +225,7 @@ class SentenceBuilder {
     });
   }
 
+  // --- MODIFIED: This will now also auto-check the sentence ---
   _handleWordClick(wordElement) {
     const wordObj = {
         word: wordElement.textContent,
@@ -210,7 +233,13 @@ class SentenceBuilder {
     };
     this.state.sentenceWordsArray.push(wordObj);
     this._renderSentence();
-    this._fetchNextWords();
+    
+    // New: Check if the last word is punctuation
+    if (wordObj.type === 'punctuation') {
+      this._handleHighFiveClick(); // Auto-check the sentence
+    } else {
+      this._fetchNextWords();
+    }
   }
   
   // --- MODIFIED: Render Sentence with Colors ---
