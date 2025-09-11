@@ -85,22 +85,38 @@ const LEARNING_LEVELS = {
   },
 };
 
-// This function will be called to get words from the AI
-async function getAIWords(sentence, nextPartType, theme) {
-  const prompt = `You are a helpful language model assistant. Given the partial sentence "${sentence}", please suggest a list of 4 words that could come next. The next word should be a "${nextPartType}". If there is a theme, like "${theme}", try to suggest words related to it. Respond with ONLY a comma-separated list of lowercase words, like "word1, word2, word3, word4".`;
-
-  try {
-    const response = await callGeminiAPI(prompt);
-    const text = findTextInResponse(response);
-    if (text) {
-      const words = text.split(',').map(word => ({ word: word.trim(), type: nextPartType }));
-      return words.filter(word => word.word.length > 0);
+// --- NEW: Gets words from either AI or a local fallback ---
+async function _getWords(sentence, nextPartType, theme, allWordsData) {
+    // Try to get words from the AI
+    try {
+        let prompt;
+        if (nextPartType === 'verb') {
+            // New prompt explicitly asking for present tense verbs
+            prompt = `You are a helpful language model assistant. Given the partial sentence "${sentence}", please suggest a list of 4 words that could come next. The next word should be a "${nextPartType}". Please suggest simple verbs in the present tense only (like "runs", "eats", "jumps", etc.). If there is a theme, like "${theme}", try to suggest words related to it. Respond with ONLY a comma-separated list of lowercase words, like "word1, word2, word3, word4".`;
+        } else {
+            prompt = `You are a helpful language model assistant. Given the partial sentence "${sentence}", please suggest a list of 4 words that could come next. The next word should be a "${nextPartType}". If there is a theme, like "${theme}", try to suggest words related to it. Respond with ONLY a comma-separated list of lowercase words, like "word1, word2, word3, word4".`;
+        }
+        
+        const response = await callGeminiAPI(prompt);
+        const text = findTextInResponse(response);
+        if (text) {
+            const aiWords = text.split(',').map(word => ({ word: word.trim(), type: nextPartType }));
+            if (aiWords.length > 0) {
+                return aiWords.filter(word => word.word.length > 0);
+            }
+        }
+    } catch (error) {
+        // Fallback to local words if API call fails
+        console.error("Falling back to local words due to API error:", error);
     }
-  } catch (error) {
-    console.error('Failed to get AI words:', error);
-    return []; 
-  }
-  return [];
+    
+    // Fallback to local words
+    const localWords = allWordsData.words[nextPartType] || [];
+    const fallbackWords = localWords.map(word => ({ word: word, type: nextPartType }));
+    
+    // Shuffle and pick 4 words from the fallback list
+    const shuffled = fallbackWords.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 4);
 }
 
 
@@ -205,15 +221,16 @@ class SentenceBuilder {
 
     const currentSentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
 
-    if (nextPart !== 'punctuation') {
-      const aiWords = await getAIWords(currentSentence, nextPart, this.state.currentTheme);
-      this.state.wordBank = aiWords;
-    } else {
-      this.state.wordBank = this.state.allWordsData.words.punctuation;
+    const wordsToDisplay = await _getWords(currentSentence, nextPart, this.state.currentTheme, this.state.allWordsData);
+    
+    // Check if a fallback was used
+    const usingFallback = wordsToDisplay.some(word => word.word && this.state.allWordsData.words[word.type] && this.state.allWordsData.words[word.type].includes(word.word));
+    if (usingFallback) {
+        this._showMessage("Using backup words to keep playing! 👍", 'bg-info', 3000);
     }
 
+    this.state.wordBank = wordsToDisplay;
     this._renderWordBank();
-    this._hideMessage();
   }
 
   _renderWordBank() {
@@ -230,6 +247,7 @@ class SentenceBuilder {
       button.className = `word-button squircle ${colorClass}-color fade-in`; 
       this.elements.wordBankContainer.appendChild(button);
     });
+    this._hideMessage();
   }
   
   _handleWordClick(wordElement) {
