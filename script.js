@@ -8,16 +8,6 @@
 // -------------------------------------------------------------
 const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
-
-// This is the main application file for the Sentence Lab.
-// This version uses a scaffolded learning approach with local data and strategic AI.
-
-// -------------------------------------------------------------
-// SECURE API KEY HANDLING
-// In a real application, a backend server should handle API keys.
-// -------------------------------------------------------------
-// const API_KEY = 'YOUR_API_KEY'; // Replace with your actual key
-
 const callGeminiAPI = async (prompt) => {
   const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
   try {
@@ -304,7 +294,7 @@ class SentenceBuilder {
     } catch (error) {
       this._showMessage('Could not check sentence. Try again!', 'bg-info');
     }
-  }
+  
 
   // --- MODIFIED: Instructions are now based on level goal ---
   _updateInstructionText() {
