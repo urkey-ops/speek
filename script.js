@@ -16,28 +16,12 @@ const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 // In a real application, a backend server should handle API keys.
 // For this demonstration, you can put your key here.
 // -------------------------------------------------------------
-//const API_KEY = 'YOUR_API_KEY';
+// const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
-const callGeminiAPI = async (prompt) => {
-  const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
-  try {
-    const response = await fetch(API_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`API Error: ${response.status} - ${errorData.error.message}`);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('API call failed:', error);
-    throw error;
-  }
-};
+const apiCache = new Map();
 
+// Helper function to find the text content in the API response,
+// which can be nested.
 function findTextInResponse(obj) {
   if (typeof obj === 'string') return obj;
   if (typeof obj === 'object' && obj !== null) {
@@ -48,6 +32,40 @@ function findTextInResponse(obj) {
   }
   return null;
 }
+
+// Helper function to make the API call with caching.
+const callGeminiAPI = async (prompt) => {
+  const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+  
+  // Use a simple hash of the prompt as a cache key.
+  const cacheKey = prompt; 
+
+  // Check if the response is already in the cache.
+  if (apiCache.has(cacheKey)) {
+    return apiCache.get(cacheKey);
+  }
+
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`API Error: ${response.status} - ${errorData.error.message}`);
+    }
+
+    const data = await response.json();
+    apiCache.set(cacheKey, data); // Store the response in the cache.
+    return data;
+  } catch (error) {
+    console.error('API call failed:', error);
+    throw error;
+  }
+};
+
 
 // Scaffolding Levels Definition
 const LEARNING_LEVELS = {
@@ -97,13 +115,15 @@ class SentenceBuilder {
       sentencesCompletedAtLevel: 0,
     };
     this.elements = {};
+    this.messageTimeout = null;
+    this._getElements();
+    this._setupEventListeners();
   }
 
   async init() {
-    this._getElements();
-    this._setupEventListeners();
     try {
       const response = await fetch('words.json');
+      if (!response.ok) throw new Error('words.json not found');
       this.state.allWordsData = await response.json();
       this._renderThemeSelector();
     } catch (error) {
@@ -139,7 +159,7 @@ class SentenceBuilder {
     this.elements.shuffleWordsBtn.addEventListener('click', () => this._fetchNextWords());
   }
 
-  // --- NEW: Theme Selection ---
+  // --- Theme Selection ---
   _renderThemeSelector() {
     this.state.allWordsData.themes.forEach(theme => {
       const button = document.createElement('button');
@@ -159,7 +179,7 @@ class SentenceBuilder {
     this._startLevel();
   }
 
-  // --- NEW: Level Management ---
+  // --- Level Management ---
   _startLevel() {
     this.state.sentencesCompletedAtLevel = 0;
     this._clearSentence();
@@ -169,14 +189,14 @@ class SentenceBuilder {
   _levelUp() {
     if (LEARNING_LEVELS[this.state.currentLevel + 1]) {
       this.state.currentLevel++;
-      this._showMessage(`🌟 LEVEL UP! 🌟`, 'bg-success');
+      this._showMessage('🎉 LEVEL UP! 🎉', 'bg-success');
       setTimeout(() => this._startLevel(), 2000);
     } else {
-      this._showMessage('Wow! You are a sentence master! 🎉', 'bg-success');
+      this._showMessage('Wow! You are a sentence master! 🏆', 'bg-success');
     }
   }
 
-  // --- REWRITTEN: Contextual Word Logic using AI ---
+  // --- Contextual Word Logic using AI ---
   async _fetchNextWords() {
     const level = LEARNING_LEVELS[this.state.currentLevel];
     const nextPartIndex = this.state.sentenceWordsArray.length;
@@ -202,22 +222,25 @@ class SentenceBuilder {
     this._renderWordBank();
   }
 
-  // --- MODIFIED: Render with Color-Coding ---
+  // --- Render with Color-Coding ---
   _renderWordBank() {
     this.elements.wordBankContainer.innerHTML = '';
     const colorMap = this.state.allWordsData.typeColors;
+    
+    // Sort words to present them in a consistent, alphabetical order
+    const sortedWords = [...this.state.wordBank].sort((a, b) => a.word.localeCompare(b.word));
 
-    this.state.wordBank.forEach(wordObj => {
+    sortedWords.forEach(wordObj => {
       const button = document.createElement('button');
       button.textContent = wordObj.word;
       button.dataset.type = wordObj.type;
       const colorClass = colorMap[wordObj.type] || colorMap['other'];
-      button.className = `word-button squircle ${colorClass}-color`;
+      button.className = `word-button squircle ${colorClass}-color fade-in`; // Add fade-in animation
       this.elements.wordBankContainer.appendChild(button);
     });
+    this._hideMessage();
   }
-
-  // --- MODIFIED: This will now also auto-check the sentence ---
+  
   _handleWordClick(wordElement) {
     const wordObj = {
       word: wordElement.textContent,
@@ -226,16 +249,13 @@ class SentenceBuilder {
     this.state.sentenceWordsArray.push(wordObj);
     this._renderSentence();
 
-    // Check if the last word is punctuation to auto-trigger the check
     if (wordObj.type === 'punctuation') {
       this._handleHighFiveClick();
     } else {
-      // Only fetch next words if the sentence is not yet finished
       this._fetchNextWords();
     }
   }
 
-  // --- MODIFIED: Render Sentence with Colors ---
   _renderSentence() {
     this.elements.sentenceDisplay.innerHTML = '';
     const colorMap = this.state.allWordsData.typeColors;
@@ -247,7 +267,7 @@ class SentenceBuilder {
         const span = document.createElement('span');
         span.textContent = wordObj.word;
         const colorClass = colorMap[wordObj.type] || colorMap['other'];
-        span.className = `sentence-word ${colorClass}-color`;
+        span.className = `sentence-word ${colorClass}-color fade-in`;
         this.elements.sentenceDisplay.appendChild(span);
 
         if (index < this.state.sentenceWordsArray.length - 1 && this.state.sentenceWordsArray[index+1].type !== 'punctuation') {
@@ -283,11 +303,9 @@ class SentenceBuilder {
     this._fetchNextWords();
   }
 
- // --- MODIFIED: High-Five now handles level progression with a new prompt ---
-async _handleHighFiveClick() {
+  async _handleHighFiveClick() {
     const sentenceText = this.state.sentenceWordsArray.map(w => w.word).join(' ');
 
-    // The new, more precise prompt
     const prompt = `You are a helpful language model. The sentence is "${sentenceText}". Is it grammatically complete? Answer with only one of these words: VALID or INVALID.`;
     
     try {
@@ -296,13 +314,10 @@ async _handleHighFiveClick() {
         const feedback = findTextInResponse(response).trim();
         
         if (feedback.toLowerCase().includes("valid")) {
-            // First, show the awesome message
-            this._showMessage('Awesome! Great sentence! 🌟', 'bg-success');
+            this._showMessage('Awesome! Great sentence! 🎉', 'bg-success');
             this.state.sentencesCompletedAtLevel++;
 
-            // Wait a moment before transitioning
             setTimeout(() => {
-                // Then, show the next message and clear the board
                 this._showMessage('Ready for a new one? Let\'s go!', 'bg-info');
                 setTimeout(() => {
                     const level = LEARNING_LEVELS[this.state.currentLevel];
@@ -312,11 +327,10 @@ async _handleHighFiveClick() {
                         this._clearSentence();
                         this._updateInstructionText();
                     }
-                }, 2000); // Wait another 2 seconds before the next task
-            }, 2000); // 2-second delay
+                }, 2000);
+            }, 2000);
 
         } else {
-            // New prompt for the hint, as the first prompt is just for validation
             const hintPrompt = `You are a friendly teacher for a 6-year-old. The child wrote this sentence: "${sentenceText}". Give one very simple, encouraging hint for a first grader to fix it.`;
             const hintResponse = await callGeminiAPI(hintPrompt);
             const hint = findTextInResponse(hintResponse).trim();
@@ -325,14 +339,13 @@ async _handleHighFiveClick() {
     } catch (error) {
         this._showMessage('Could not check sentence. Try again!', 'bg-info');
     }
-}
+  }
 
-  // --- MODIFIED: Instructions are now based on level goal ---
   _updateInstructionText() {
     const level = LEARNING_LEVELS[this.state.currentLevel];
     const remaining = level.threshold - this.state.sentencesCompletedAtLevel;
     const goalText = `${level.goal} (${remaining} more to level up!)`;
-    this._showMessage(goalText, 'bg-info', 6000); // Show for longer
+    this._showMessage(goalText, 'bg-info', 6000);
   }
 
   _showMessage(text, className, duration = 3000) {
@@ -340,8 +353,12 @@ async _handleHighFiveClick() {
     this.elements.messageBox.textContent = text;
     this.elements.messageBox.className = `message-box visible ${className}`;
     this.messageTimeout = setTimeout(() => {
-      this.elements.messageBox.className = 'message-box';
+      this._hideMessage();
     }, duration);
+  }
+
+  _hideMessage() {
+    this.elements.messageBox.className = 'message-box';
   }
 }
 
