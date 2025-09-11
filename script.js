@@ -7,7 +7,6 @@
 // For this demonstration, you can put your key here.
 // -------------------------------------------------------------
 const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
-
 const callGeminiAPI = async (prompt) => {
   const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
   try {
@@ -145,10 +144,10 @@ class SentenceBuilder {
   _levelUp() {
       if (LEARNING_LEVELS[this.state.currentLevel + 1]) {
           this.state.currentLevel++;
-          this._showMessage(`🎉 LEVEL UP! 🎉`, 'bg-success');
+          this._showMessage(`脂 LEVEL UP! 脂`, 'bg-success');
           setTimeout(() => this._startLevel(), 2000);
       } else {
-          this._showMessage('Wow! You are a sentence master! 🏆', 'bg-success');
+          this._showMessage('Wow! You are a sentence master! 醇', 'bg-success');
       }
   }
 
@@ -275,7 +274,7 @@ class SentenceBuilder {
       const feedback = findTextInResponse(response).trim();
       
       if (feedback.toLowerCase().includes("correct")) {
-        this._showMessage('Awesome! Great sentence! 🎉', 'bg-success');
+        this._showMessage('Awesome! Great sentence! 脂', 'bg-success');
         this.state.sentencesCompletedAtLevel++;
 
         setTimeout(() => {
@@ -294,7 +293,7 @@ class SentenceBuilder {
     } catch (error) {
       this._showMessage('Could not check sentence. Try again!', 'bg-info');
     }
-  
+  }
 
   // --- MODIFIED: Instructions are now based on level goal ---
   _updateInstructionText() {
