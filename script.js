@@ -8,34 +8,27 @@
 // -------------------------------------------------------------
 const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
-// This is the main application file for the Sentence Lab.
-// This version is designed to connect to the Gemini API.
-
-// -------------------------------------------------------------
-// SECURE API KEY HANDLING
-// In a real application, a backend server should handle API keys.
-// For this demonstration, you can put your key here.
-// -------------------------------------------------------------
-// const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
-
 // A simple cache to store API responses
 const apiCache = new Map();
 
 // Helper function to find the text content in the API response,
 // which can be nested.
 function findTextInResponse(obj) {
-  if (typeof obj === 'string') return obj;
-
-  if (Array.isArray(obj)) {
-    for (const item of obj) {
-      const result = findTextInResponse(item);
-      if (result) return result;
+  const stack = [obj];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (typeof current === 'string') {
+      return current;
     }
-  } else if (typeof obj === 'object' && obj !== null) {
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        const result = findTextInResponse(obj[key]);
-        if (result) return result;
+    if (Array.isArray(current)) {
+      for (let i = current.length - 1; i >= 0; i--) {
+        stack.push(current[i]);
+      }
+    } else if (typeof current === 'object' && current !== null) {
+      for (const key in current) {
+        if (Object.prototype.hasOwnProperty.call(current, key)) {
+          stack.push(current[key]);
+        }
       }
     }
   }
@@ -46,10 +39,7 @@ function findTextInResponse(obj) {
 const callGeminiAPI = async (prompt) => {
   const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
   
-  // Use the prompt as a unique key for the cache.
   const cacheKey = prompt; 
-
-  // Check if the response is already in the cache.
   if (apiCache.has(cacheKey)) {
     return apiCache.get(cacheKey);
   }
@@ -67,7 +57,7 @@ const callGeminiAPI = async (prompt) => {
     }
 
     const data = await response.json();
-    apiCache.set(cacheKey, data); // Store the response in the cache.
+    apiCache.set(cacheKey, data); 
     return data;
   } catch (error) {
     console.error('API call failed:', error);
@@ -79,17 +69,17 @@ const callGeminiAPI = async (prompt) => {
 // Scaffolding Levels Definition
 const LEARNING_LEVELS = {
   1: {
-    goal: "Let's make a simple sentence (like 'The dog runs').",
+    goal: "Let's make a simple sentence!",
     structure: ['determiner', 'noun', 'verb', 'punctuation'],
     threshold: 3 // Sentences to complete before leveling up
   },
   2: {
-    goal: "Great! Now let's add a describing word (like 'The big dog runs').",
+    goal: "Now let's add a describing word!",
     structure: ['determiner', 'adjective', 'noun', 'verb', 'punctuation'],
     threshold: 4
   },
   3: {
-    goal: "Awesome! Let's say *where* it happened (like 'The dog runs in the park').",
+    goal: "Time to say *where* it happened!",
     structure: ['determiner', 'noun', 'verb', 'preposition', 'determiner', 'noun', 'punctuation'],
     threshold: 5
   },
@@ -97,17 +87,18 @@ const LEARNING_LEVELS = {
 
 // This function will be called to get words from the AI
 async function getAIWords(sentence, nextPartType, theme) {
-  const prompt = `You are a helpful language model assistant. Given the partial sentence "${sentence}", please suggest a list of 5-7 words that could come next. The next word should be a "${nextPartType}". If there is a theme, like "${theme}", try to suggest words related to it. Respond with ONLY a comma-separated list of lowercase words, like "word1, word2, word3".`;
+  const prompt = `You are a helpful language model assistant. Given the partial sentence "${sentence}", please suggest a list of 4 words that could come next. The next word should be a "${nextPartType}". If there is a theme, like "${theme}", try to suggest words related to it. Respond with ONLY a comma-separated list of lowercase words, like "word1, word2, word3, word4".`;
 
   try {
     const response = await callGeminiAPI(prompt);
     const text = findTextInResponse(response);
     if (text) {
-      return text.split(',').map(word => ({ word: word.trim(), type: nextPartType, theme: theme }));
+      const words = text.split(',').map(word => ({ word: word.trim(), type: nextPartType }));
+      return words.filter(word => word.word.length > 0);
     }
   } catch (error) {
     console.error('Failed to get AI words:', error);
-    return []; // Return empty array on failure
+    return []; 
   }
   return [];
 }
@@ -116,7 +107,7 @@ async function getAIWords(sentence, nextPartType, theme) {
 class SentenceBuilder {
   constructor() {
     this.state = {
-      allWordsData: null, // To store words.json
+      allWordsData: null, 
       sentenceWordsArray: [],
       wordBank: [],
       currentTheme: null,
@@ -125,18 +116,18 @@ class SentenceBuilder {
     };
     this.elements = {};
     this.messageTimeout = null;
-    this._getElements();
-    this._setupEventListeners();
   }
 
   async init() {
+    this._getElements();
+    this._setupEventListeners();
     try {
       const response = await fetch('words.json');
       if (!response.ok) throw new Error('words.json not found');
       this.state.allWordsData = await response.json();
       this._renderThemeSelector();
     } catch (error) {
-    //   console.error("Failed to load words.json:", error);
+      console.error("Failed to load words.json:", error);
       this.elements.themeSelector.innerHTML = `<h1 class="text-2xl text-red-600">Error: Could not load word data.</h1>`;
     }
   }
@@ -149,11 +140,10 @@ class SentenceBuilder {
       sentenceDisplay: document.getElementById('sentenceDisplay'),
       wordBankContainer: document.getElementById('wordBankContainer'),
       highFiveBtn: document.getElementById('highFiveBtn'),
-      goBackBtn: document.getElementById('goBackBtn'),
-      clearBtn: document.getElementById('clearBtn'),
       readAloudBtn: document.getElementById('readAloudBtn'),
       messageBox: document.getElementById('messageBox'),
-      shuffleWordsBtn: document.getElementById('shuffleWordsBtn'),
+      levelProgressText: document.getElementById('levelProgressText'),
+      progressFill: document.getElementById('progressFill'),
     };
   }
 
@@ -161,14 +151,10 @@ class SentenceBuilder {
     this.elements.wordBankContainer.addEventListener('click', (e) => {
       if (e.target.matches('.word-button')) this._handleWordClick(e.target);
     });
-    this.elements.goBackBtn.addEventListener('click', () => this._goBack());
-    this.elements.clearBtn.addEventListener('click', () => this._clearSentence());
     this.elements.readAloudBtn.addEventListener('click', () => this._readSentenceAloud());
     this.elements.highFiveBtn.addEventListener('click', () => this._handleHighFiveClick());
-    this.elements.shuffleWordsBtn.addEventListener('click', () => this._fetchNextWords());
   }
 
-  // --- Theme Selection ---
   _renderThemeSelector() {
     this.state.allWordsData.themes.forEach(theme => {
       const button = document.createElement('button');
@@ -188,7 +174,6 @@ class SentenceBuilder {
     this._startLevel();
   }
 
-  // --- Level Management ---
   _startLevel() {
     this.state.sentencesCompletedAtLevel = 0;
     this._clearSentence();
@@ -205,7 +190,6 @@ class SentenceBuilder {
     }
   }
 
-  // --- Contextual Word Logic using AI ---
   async _fetchNextWords() {
     const level = LEARNING_LEVELS[this.state.currentLevel];
     const nextPartIndex = this.state.sentenceWordsArray.length;
@@ -229,14 +213,13 @@ class SentenceBuilder {
     }
 
     this._renderWordBank();
+    this._hideMessage();
   }
 
-  // --- Render with Color-Coding ---
   _renderWordBank() {
     this.elements.wordBankContainer.innerHTML = '';
     const colorMap = this.state.allWordsData.typeColors;
     
-    // Sort words to present them in a consistent, alphabetical order
     const sortedWords = [...this.state.wordBank].sort((a, b) => a.word.localeCompare(b.word));
 
     sortedWords.forEach(wordObj => {
@@ -244,10 +227,9 @@ class SentenceBuilder {
       button.textContent = wordObj.word;
       button.dataset.type = wordObj.type;
       const colorClass = colorMap[wordObj.type] || colorMap['other'];
-      button.className = `word-button squircle ${colorClass}-color fade-in`; // Add fade-in animation
+      button.className = `word-button squircle ${colorClass}-color fade-in`; 
       this.elements.wordBankContainer.appendChild(button);
     });
-    this._hideMessage();
   }
   
   _handleWordClick(wordElement) {
@@ -257,7 +239,7 @@ class SentenceBuilder {
     const selectedType = wordElement.dataset.type;
 
     if (selectedType !== expectedType) {
-        this._showMessage("Oops! That's not the right kind of word. Try again!", 'bg-info');
+        this._showMessage("Oops, that doesn't fit! Try a different one.", 'bg-warning');
         return;
     }
 
@@ -303,12 +285,6 @@ class SentenceBuilder {
     this.elements.highFiveBtn.disabled = !isComplete;
   }
 
-  _goBack() {
-    this.state.sentenceWordsArray.pop();
-    this._renderSentence();
-    this._fetchNextWords();
-  }
-
   _readSentenceAloud() {
     const sentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
     if (sentence.length > 0) {
@@ -324,8 +300,7 @@ class SentenceBuilder {
 
   async _handleHighFiveClick() {
     const sentenceText = this.state.sentenceWordsArray.map(w => w.word).join(' ');
-
-    const prompt = `You are a helpful language model. The sentence is "${sentenceText}". Is it grammatically complete? Answer with only one of these words: VALID or INVALID.`;
+    const prompt = `Is "${sentenceText}" a grammatically complete sentence? Respond with only "VALID" or "INVALID".`;
     
     try {
         this._showMessage("Checking...", 'bg-info');
@@ -333,38 +308,37 @@ class SentenceBuilder {
         const feedback = findTextInResponse(response).trim();
         
         if (feedback.toLowerCase().includes("valid")) {
-            this._showMessage('Awesome! Great sentence! 🎉', 'bg-success');
+            this._showMessage('Awesome! You made a great sentence! 🎉', 'bg-success');
             this.state.sentencesCompletedAtLevel++;
+            this._updateInstructionText();
 
             setTimeout(() => {
-                this._showMessage('Ready for a new one? Let\'s go!', 'bg-info');
-                setTimeout(() => {
-                    const level = LEARNING_LEVELS[this.state.currentLevel];
-                    if (this.state.sentencesCompletedAtLevel >= level.threshold) {
-                        this._levelUp();
-                    } else {
-                        this._clearSentence();
-                        this._updateInstructionText();
-                    }
-                }, 2000);
-            }, 2000);
+                const level = LEARNING_LEVELS[this.state.currentLevel];
+                if (this.state.sentencesCompletedAtLevel >= level.threshold) {
+                    this._levelUp();
+                } else {
+                    this._clearSentence();
+                    this._updateInstructionText();
+                }
+            }, 2000); 
 
         } else {
-            const hintPrompt = `You are a friendly teacher for a 6-year-old. The child wrote this sentence: "${sentenceText}". Give one very simple, encouraging hint for a first grader to fix it.`;
+            const hintPrompt = `The sentence is "${sentenceText}". Give a very simple, encouraging hint for a first grader to fix it.`;
             const hintResponse = await callGeminiAPI(hintPrompt);
             const hint = findTextInResponse(hintResponse).trim();
-            this._showMessage(hint, 'bg-info');
+            this._showMessage(hint, 'bg-warning');
         }
     } catch (error) {
-        this._showMessage('Could not check sentence. Try again!', 'bg-info');
+        this._showMessage('Could not check sentence. Try again!', 'bg-warning');
     }
   }
 
   _updateInstructionText() {
     const level = LEARNING_LEVELS[this.state.currentLevel];
-    const remaining = level.threshold - this.state.sentencesCompletedAtLevel;
-    const goalText = `${level.goal} (${remaining} more to level up!)`;
-    this._showMessage(goalText, 'bg-info', 6000);
+    this.elements.levelProgressText.textContent = level.goal;
+    
+    const percentage = (this.state.sentencesCompletedAtLevel / level.threshold) * 100;
+    this.elements.progressFill.style.width = `${percentage}%`;
   }
 
   _showMessage(text, className, duration = 3000) {
