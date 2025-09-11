@@ -111,7 +111,12 @@ async function _getWords(sentence, nextPartType, theme, allWordsData) {
     }
     
     // Fallback to local words
-    const localWords = allWordsData.words[nextPartType] || [];
+    let localWords = allWordsData.words[nextPartType];
+    
+    if (typeof localWords === 'object' && !Array.isArray(localWords)) {
+        localWords = localWords[theme] || Object.values(localWords).flat();
+    }
+    
     const fallbackWords = localWords.map(word => ({ word: word, type: nextPartType }));
     
     // Shuffle and pick 4 words from the fallback list
@@ -250,7 +255,7 @@ class SentenceBuilder {
     this._hideMessage();
   }
   
-   _handleWordClick(wordElement) {
+  _handleWordClick(wordElement) {
     const level = LEARNING_LEVELS[this.state.currentLevel];
     const nextPartIndex = this.state.sentenceWordsArray.length;
     const expectedType = level.structure[nextPartIndex];
@@ -271,9 +276,10 @@ class SentenceBuilder {
     if (wordObj.type === 'punctuation') {
       this._handleHighFiveClick();
     } else {
-      this._fetchNextWords(); // This line is the crucial correction
+      this._fetchNextWords();
     }
   }
+
   _renderSentence() {
     this.elements.sentenceDisplay.innerHTML = '';
     const colorMap = this.state.allWordsData.typeColors;
