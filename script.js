@@ -283,44 +283,49 @@ class SentenceBuilder {
     this._fetchNextWords();
   }
 
-  // --- MODIFIED: High-Five now handles level progression with better flow ---
-  async _handleHighFiveClick() {
+ // --- MODIFIED: High-Five now handles level progression with a new prompt ---
+async _handleHighFiveClick() {
     const sentenceText = this.state.sentenceWordsArray.map(w => w.word).join(' ');
-    const prompt = `You are a friendly teacher for a 6-year-old. The child wrote this sentence: "${sentenceText}". Is it a grammatically correct and complete sentence? Respond with ONLY "Correct" if it is. If not, give one very simple, encouraging hint for a first grader to fix it.`;
 
+    // The new, more precise prompt
+    const prompt = `You are a helpful language model. The sentence is "${sentenceText}". Is it grammatically complete? Answer with only one of these words: VALID or INVALID.`;
+    
     try {
-      this._showMessage("Checking...", 'bg-info');
-      const response = await callGeminiAPI(prompt);
-      const feedback = findTextInResponse(response).trim();
+        this._showMessage("Checking...", 'bg-info');
+        const response = await callGeminiAPI(prompt);
+        const feedback = findTextInResponse(response).trim();
+        
+        if (feedback.toLowerCase().includes("valid")) {
+            // First, show the awesome message
+            this._showMessage('Awesome! Great sentence! 🌟', 'bg-success');
+            this.state.sentencesCompletedAtLevel++;
 
-      if (feedback.toLowerCase().includes("correct")) {
-        // First, show the awesome message
-        this._showMessage('Awesome! Great sentence! 🌟', 'bg-success');
-        this.state.sentencesCompletedAtLevel++;
+            // Wait a moment before transitioning
+            setTimeout(() => {
+                // Then, show the next message and clear the board
+                this._showMessage('Ready for a new one? Let\'s go!', 'bg-info');
+                setTimeout(() => {
+                    const level = LEARNING_LEVELS[this.state.currentLevel];
+                    if (this.state.sentencesCompletedAtLevel >= level.threshold) {
+                        this._levelUp();
+                    } else {
+                        this._clearSentence();
+                        this._updateInstructionText();
+                    }
+                }, 2000); // Wait another 2 seconds before the next task
+            }, 2000); // 2-second delay
 
-        // Wait a moment before transitioning
-        setTimeout(() => {
-          // Then, show the next message and clear the board
-          this._showMessage('Ready for a new one? Let\'s go!', 'bg-info');
-          setTimeout(() => {
-            const level = LEARNING_LEVELS[this.state.currentLevel];
-            if (this.state.sentencesCompletedAtLevel >= level.threshold) {
-              this._levelUp();
-            } else {
-              this._clearSentence();
-              this._updateInstructionText();
-            }
-          }, 2000); // Wait another 2 seconds before the next task
-        }, 2000); // 2-second delay
-
-      } else {
-        // If incorrect, still provide the helpful hint
-        this._showMessage(feedback, 'bg-info');
-      }
+        } else {
+            // New prompt for the hint, as the first prompt is just for validation
+            const hintPrompt = `You are a friendly teacher for a 6-year-old. The child wrote this sentence: "${sentenceText}". Give one very simple, encouraging hint for a first grader to fix it.`;
+            const hintResponse = await callGeminiAPI(hintPrompt);
+            const hint = findTextInResponse(hintResponse).trim();
+            this._showMessage(hint, 'bg-info');
+        }
     } catch (error) {
-      this._showMessage('Could not check sentence. Try again!', 'bg-info');
+        this._showMessage('Could not check sentence. Try again!', 'bg-info');
     }
-  }
+}
 
   // --- MODIFIED: Instructions are now based on level goal ---
   _updateInstructionText() {
