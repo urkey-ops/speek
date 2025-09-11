@@ -291,10 +291,9 @@ class SentenceBuilder {
     this._fetchNextWords();
   }
 
-  // --- MODIFIED: High-Five now handles level progression ---
-  async _handleHighFiveClick() {
+ // --- MODIFIED: High-Five now handles level progression with better flow ---
+async _handleHighFiveClick() {
     const sentenceText = this.state.sentenceWordsArray.map(w => w.word).join(' ');
-    // STRATEGIC AI USE: Use Gemini for grammatical validation and encouragement
     const prompt = `You are a friendly teacher for a 6-year-old. The child wrote this sentence: "${sentenceText}". Is it a grammatically correct and complete sentence? Respond with ONLY "Correct" if it is. If not, give one very simple, encouraging hint for a first grader to fix it.`;
     
     try {
@@ -303,9 +302,11 @@ class SentenceBuilder {
       const feedback = findTextInResponse(response).trim();
       
       if (feedback.toLowerCase().includes("correct")) {
-        this._showMessage('Awesome! Great sentence! 脂', 'bg-success');
+        // Step 1: Show the positive message immediately
+        this._showMessage('Awesome! Great sentence! 🌟', 'bg-success');
         this.state.sentencesCompletedAtLevel++;
 
+        // Step 2: After a brief delay, clear the board and show the next instructions
         setTimeout(() => {
           const level = LEARNING_LEVELS[this.state.currentLevel];
           if (this.state.sentencesCompletedAtLevel >= level.threshold) {
@@ -314,16 +315,16 @@ class SentenceBuilder {
               this._clearSentence();
               this._updateInstructionText();
           }
-        }, 2000);
+        }, 2000); // 2-second delay
         
       } else {
-        this._showMessage(feedback, 'bg-info'); // Use info for hints
+        // If incorrect, still provide the helpful hint
+        this._showMessage(feedback, 'bg-info'); 
       }
     } catch (error) {
       this._showMessage('Could not check sentence. Try again!', 'bg-info');
     }
-  }
-
+}
   // --- MODIFIED: Instructions are now based on level goal ---
   _updateInstructionText() {
     const level = LEARNING_LEVELS[this.state.currentLevel];
