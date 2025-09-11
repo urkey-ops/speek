@@ -34,14 +34,18 @@
         </div>
 
         <div class="flex flex-wrap justify-center gap-4 mt-2">
-            <button id="goBackBtn" class="action-button"><i class="fas fa-undo"></i> Go Back</button>
-            <button id="clearBtn" class="action-button"><i class="fas fa-trash-alt"></i> Clear</button>
             <button id="readAloudBtn" class="action-button"><i class="fas fa-volume-up"></i> Read Aloud</button>
-            <button id="shuffleWordsBtn" class="action-button"><i class="fas fa-sync-alt"></i> More Words</button>
         </div>
 
         <div id="wordBankContainer" class="w-full flex flex-wrap justify-center gap-3 md:gap-4 mt-6">
             </div>
+
+        <div id="levelProgress" class="mt-4 flex flex-col items-center w-full max-w-sm">
+            <p id="levelProgressText" class="text-lg font-bold text-indigo-700 mb-2"></p>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+        </div>
 
         <div class="flex justify-center mt-6">
             <button id="highFiveBtn" class="high-five-button" disabled>High-Five! 👋</button>
