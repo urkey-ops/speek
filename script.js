@@ -100,23 +100,25 @@ async function getAIWords(sentence, nextPartType, theme) {
   }
   
   // Return a static, non-AI list of words if the AI fails
-  // Use global app instance to access state safely
-  const level = LEARNING_LEVELS[window.app.state.currentLevel];
-  const fallbackType = level.structure[window.app.state.sentenceWordsArray.length];
+  const level = LEARNING_LEVELS[this.state.currentLevel];
+  const fallbackType = level.structure[this.state.sentenceWordsArray.length];
 
+  // Logic to handle fallback words based on the new JSON structure
   let fallbackWords = [];
   if (['determiner', 'preposition', 'punctuation'].includes(fallbackType)) {
-      fallbackWords = window.app.state.allWordsData?.miscWords[fallbackType] || [];
+      fallbackWords = this.state.allWordsData.miscWords[fallbackType];
   } else {
-      fallbackWords = window.app.state.allWordsData?.words[fallbackType]?.[window.app.state.currentTheme] || [];
+      fallbackWords = this.state.allWordsData.words[fallbackType][this.state.currentTheme];
   }
   
+  // Get a random sample of words for a fallback list
   const randomWords = fallbackWords
     .sort(() => 0.5 - Math.random())
     .slice(0, 5)
-    .map(word => ({ word: word.trim(), type: fallbackType, theme: window.app.state.currentTheme }));
+    .map(word => ({ word: word.trim(), type: fallbackType, theme: this.state.currentTheme }));
 
-  window.app._showMessage('Hmm, using fallback words for now!', 'bg-info');
+  // Show a message to the user that the app is using a fallback
+  this._showMessage('Hmm, having trouble. Here are some words!', 'bg-info');
   return randomWords;
 }
 
@@ -182,7 +184,7 @@ class SentenceBuilder {
   _renderThemeSelector() {
     this.state.allWordsData.themes.forEach(theme => {
       const button = document.createElement('button');
-      button.className = 'theme-button squircle';
+      button.className = 'theme-button';
       button.innerHTML = `<span class="emoji">${theme.emoji}</span>${theme.name}`;
       button.dataset.theme = theme.name;
       button.addEventListener('click', () => this._selectTheme(theme.name));
@@ -192,9 +194,15 @@ class SentenceBuilder {
 
   _selectTheme(themeName) {
     this.state.currentTheme = themeName;
-    this.elements.themeSelector.classList.add('hidden');
-    this.elements.appContainer.classList.remove('hidden');
-    this.elements.appContainer.classList.add('flex');
+    
+    // Animate themeSelector out
+    this.elements.themeSelector.classList.remove('transition-all', 'duration-700', 'ease-in-out');
+    this.elements.themeSelector.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+
+    // Animate appContainer in
+    this.elements.appContainer.classList.remove('hidden', 'opacity-0', 'scale-95', 'pointer-events-none');
+    this.elements.appContainer.classList.add('active'); 
+    
     this._startLevel();
   }
 
@@ -243,86 +251,78 @@ class SentenceBuilder {
 
   // --- Render with Color-Coding ---
   _renderWordBank() {
-    const typeColors = {
-      noun: 'noun-color',
-      verb: 'verb-color',
-      adjective: 'adjective-color',
-      determiner: 'determiner-color',
-      preposition: 'preposition-color',
-      punctuation: 'punctuation-color',
-      other: 'other-color'
-    };
+    this.elements.wordBankContainer.innerHTML = '';
+    const colorMap = this.state.allWordsData.typeColors;
+    
+    // Sort words to present them in a consistent, alphabetical order
+    const sortedWords = [...this.state.wordBank].sort((a, b) => a.word.localeCompare(b.word));
 
-    if (!this.state.wordBank || this.state.wordBank.length === 0) {
-      this.elements.wordBankContainer.innerHTML = `
-        <p class="text-gray-600 italic text-center w-full">
-          Oops! No words available. Try going back or refreshing.
-        </p>`;
+    if (sortedWords.length === 0) {
+      // Display a message if no words are available
+      this.elements.wordBankContainer.innerHTML = '<p class="text-gray-500 italic text-xl">No words here! Tap "Shuffle" or "Go Back".</p>';
       this._hideMessage();
       return;
     }
 
-    this.elements.wordBankContainer.innerHTML = this.state.wordBank.map(wordObj => {
-      const colorClass = typeColors[wordObj.type] || 'other-color';
-      return `<button class="word-button squircle ${colorClass}" data-type="${wordObj.type}" title="Theme: ${wordObj.theme}">
-                ${wordObj.word}
-              </button>`;
-    }).join('');
+    sortedWords.forEach(wordObj => {
+      const button = document.createElement('button');
+      button.textContent = wordObj.word;
+      button.dataset.type = wordObj.type;
+      const colorClass = colorMap[wordObj.type] || colorMap['other'];
+      button.className = `word-button ${colorClass}`;
+      this.elements.wordBankContainer.appendChild(button);
+    });
+    this._hideMessage();
+  }
+  
+  _handleWordClick(wordElement) {
+    const wordObj = {
+      word: wordElement.textContent,
+      type: wordElement.dataset.type
+    };
+    this.state.sentenceWordsArray.push(wordObj);
+    this._renderSentence();
+    this._fetchNextWords();
   }
 
   _renderSentence() {
-    const typeColors = {
-      noun: 'noun-color',
-      verb: 'verb-color',
-      adjective: 'adjective-color',
-      determiner: 'determiner-color',
-      preposition: 'preposition-color',
-      punctuation: 'punctuation-color',
-      other: 'other-color'
-    };
+    this.elements.sentenceDisplay.innerHTML = '';
+    const colorMap = this.state.allWordsData.typeColors;
 
-    this.elements.sentenceDisplay.innerHTML = this.state.sentenceWordsArray.map(wordObj => {
-      const colorClass = typeColors[wordObj.type] || 'other-color';
-      return `<span class="${colorClass}">${wordObj.word}</span>`;
-    }).join(' ');
-  }
-
-  _updateInstructionText() {
-    const levelInfo = LEARNING_LEVELS[this.state.currentLevel];
-    this.elements.levelProgressText.textContent = `Level ${this.state.currentLevel}: ${levelInfo.goal}`;
-    this._updateProgressBar();
-  }
-
-  _updateProgressBar() {
-    const levelInfo = LEARNING_LEVELS[this.state.currentLevel];
-    const progress = this.state.sentencesCompletedAtLevel / levelInfo.threshold;
-    this.elements.progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
-  }
-
-  // --- Event Handlers ---
-  _handleWordClick(button) {
-    const word = button.textContent.trim();
-    const type = button.dataset.type;
-
-    this.state.sentenceWordsArray.push({ word, type });
-    this._renderSentence();
-
-    // Clear message to avoid confusion
-    this._hideMessage();
-
-    if (this.state.sentenceWordsArray.length === LEARNING_LEVELS[this.state.currentLevel].structure.length) {
-      this._showMessage('You have completed the sentence! Hit the High-Five! ✋', 'bg-info');
+    if (this.state.sentenceWordsArray.length === 0) {
+      this.elements.sentenceDisplay.innerHTML = '<span class="placeholder-text text-[#80CBC4]">Tap a word to start planting!</span>';
     } else {
-      this._fetchNextWords();
+      this.state.sentenceWordsArray.forEach((wordObj, index) => {
+        const span = document.createElement('span');
+        span.textContent = wordObj.word;
+        const colorClass = colorMap[wordObj.type] || colorMap['other'];
+        span.className = `sentence-word ${colorClass}`;
+        this.elements.sentenceDisplay.appendChild(span);
+
+        if (index < this.state.sentenceWordsArray.length - 1 && this.state.sentenceWordsArray[index+1].type !== 'punctuation') {
+          this.elements.sentenceDisplay.appendChild(document.createTextNode(' '));
+        }
+      });
     }
+    this._renderHighFiveButton();
+  }
+
+  _renderHighFiveButton() {
+    const lastWord = this.state.sentenceWordsArray[this.state.sentenceWordsArray.length - 1];
+    const isComplete = lastWord && lastWord.type === 'punctuation';
+    this.elements.highFiveBtn.disabled = !isComplete;
   }
 
   _goBack() {
-    if (this.state.sentenceWordsArray.length > 0) {
-      this.state.sentenceWordsArray.pop();
-      this._renderSentence();
-      this._fetchNextWords();
-      this._hideMessage();
+    this.state.sentenceWordsArray.pop();
+    this._renderSentence();
+    this._fetchNextWords();
+  }
+
+  _readSentenceAloud() {
+    const sentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
+    if (sentence.length > 0) {
+      speechSynthesis.speak(new SpeechSynthesisUtterance(sentence));
     }
   }
 
@@ -330,66 +330,84 @@ class SentenceBuilder {
     this.state.sentenceWordsArray = [];
     this._renderSentence();
     this._fetchNextWords();
-    this._hideMessage();
   }
 
-  _readSentenceAloud() {
-    const sentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
-    if (sentence.trim().length > 0) {
-      speechSynthesis.speak(new SpeechSynthesisUtterance(sentence));
-    } else {
-      this._showMessage("Try building a sentence first!", "bg-warning");
+  async _handleHighFiveClick() {
+    const sentenceText = this.state.sentenceWordsArray.map(w => w.word).join(' ');
+
+    const prompt = `You are a helpful language model. The sentence is "${sentenceText}". Is it grammatically complete? Answer with only one of these words: VALID or INVALID.`;
+    
+    // Disable the button to prevent multiple clicks while checking
+    this.elements.highFiveBtn.disabled = true;
+    
+    try {
+        this._showMessage("Checking...", 'bg-info');
+        const response = await callGeminiAPI(prompt);
+        const feedback = findTextInResponse(response).trim();
+        
+        if (feedback.toLowerCase().includes("valid")) {
+            this._showMessage('Awesome! Great sentence! 🎉', 'bg-success');
+            this.state.sentencesCompletedAtLevel++;
+
+            setTimeout(() => {
+                this._showMessage('Ready for a new one? Let\'s go!', 'bg-info');
+                setTimeout(() => {
+                    const level = LEARNING_LEVELS[this.state.currentLevel];
+                    if (this.state.sentencesCompletedAtLevel >= level.threshold) {
+                        this._levelUp();
+                    } else {
+                        this._clearSentence();
+                        this._updateInstructionText();
+                    }
+                }, 2000);
+            }, 2000);
+
+        } else {
+            const hintPrompt = `You are a friendly teacher for a 6-year-old. The child wrote this sentence: "${sentenceText}". Give one very simple, encouraging hint for a first grader to fix it.`;
+            const hintResponse = await callGeminiAPI(hintPrompt);
+            const hint = findTextInResponse(hintResponse).trim();
+            this._showMessage(hint, 'bg-info');
+        }
+    } catch (error) {
+        this._showMessage('Hmm, something is wrong. Let\'s try a new sentence!', 'bg-info');
+        
+        setTimeout(() => {
+            this._clearSentence();
+            this._updateInstructionText();
+        }, 3000);
+
+    } finally {
+        this.elements.highFiveBtn.disabled = false;
+        this._renderHighFiveButton();
     }
   }
 
-  _handleHighFiveClick() {
-    const expectedStructure = LEARNING_LEVELS[this.state.currentLevel].structure;
-    const userStructure = this.state.sentenceWordsArray.map(w => w.type);
-
-    if (userStructure.length !== expectedStructure.length) {
-      this._showMessage("Your sentence is incomplete. Keep trying!", "bg-warning");
-      return;
-    }
-
-    for (let i = 0; i < expectedStructure.length; i++) {
-      if (userStructure[i] !== expectedStructure[i]) {
-        this._showMessage(`Oops! The word "${this.state.sentenceWordsArray[i].word}" should be a "${expectedStructure[i]}".`, "bg-error");
-        return;
-      }
-    }
-
-    // All good!
-    this.state.sentencesCompletedAtLevel++;
-    const feedback = `Valid sentence! You have completed ${this.state.sentencesCompletedAtLevel} of ${LEARNING_LEVELS[this.state.currentLevel].threshold} sentences at this level.`;
-    this._showMessage(feedback, 'bg-success');
-    speechSynthesis.speak(new SpeechSynthesisUtterance("Awesome! Great sentence!"));
-
-    if (this.state.sentencesCompletedAtLevel >= LEARNING_LEVELS[this.state.currentLevel].threshold) {
-      this._levelUp();
-    } else {
-      this._clearSentence();
-    }
+  _updateInstructionText() {
+    const level = LEARNING_LEVELS[this.state.currentLevel];
+    const remaining = level.threshold - this.state.sentencesCompletedAtLevel;
+    this.elements.levelProgressText.textContent = `${level.goal} (${remaining} more to level up!)`;
+    this._showMessage(this.elements.levelProgressText.textContent, 'bg-info', 6000);
+    
+    // Update progress bar
+    const progress = (this.state.sentencesCompletedAtLevel / level.threshold) * 100;
+    this.elements.progressFill.style.width = `${progress}%`;
   }
 
-  // --- Messaging Helpers ---
-  _showMessage(msg, cssClass = 'bg-info') {
+  _showMessage(text, className, duration = 3000) {
     clearTimeout(this.messageTimeout);
-    this.elements.messageBox.textContent = msg;
-    this.elements.messageBox.className = `message-box ${cssClass}`;
-    this.elements.messageBox.style.display = 'block';
-
-    // Auto-hide after 5 seconds except for success (keep longer)
-    const hideAfter = cssClass === 'bg-success' ? 7000 : 5000;
-    this.messageTimeout = setTimeout(() => this._hideMessage(), hideAfter);
+    this.elements.messageBox.textContent = text;
+    this.elements.messageBox.className = `message-box visible ${className}`;
+    this.messageTimeout = setTimeout(() => {
+      this._hideMessage();
+    }, duration);
   }
 
   _hideMessage() {
-    this.elements.messageBox.style.display = 'none';
+    this.elements.messageBox.className = 'message-box';
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   const app = new SentenceBuilder();
-  window.app = app; // Make globally accessible for fallback
   app.init();
 });
