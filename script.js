@@ -86,8 +86,6 @@ async function getAIWords(sentence, nextPartType, theme) {
 
     // Robust check for valid words
     if (text) {
-      // Check if the text is a valid list of words (contains letters, not just symbols)
-      // and does not contain the common error tokens.
       const isValidResponse = text.trim().length > 0 && 
                               !text.includes('_') && 
                               !text.includes('Ea');
@@ -104,12 +102,17 @@ async function getAIWords(sentence, nextPartType, theme) {
   // Return a static, non-AI list of words if the AI fails
   const level = LEARNING_LEVELS[this.state.currentLevel];
   const fallbackType = level.structure[this.state.sentenceWordsArray.length];
-  
-  // Use a sensible default word if a theme-specific word isn't available
-  const allWordsForType = this.state.allWordsData.words[fallbackType] || [];
+
+  // Logic to handle fallback words based on the new JSON structure
+  let fallbackWords = [];
+  if (['determiner', 'preposition', 'punctuation'].includes(fallbackType)) {
+      fallbackWords = this.state.allWordsData.miscWords[fallbackType];
+  } else {
+      fallbackWords = this.state.allWordsData.words[fallbackType][this.state.currentTheme];
+  }
   
   // Get a random sample of words for a fallback list
-  const randomWords = allWordsForType
+  const randomWords = fallbackWords
     .sort(() => 0.5 - Math.random())
     .slice(0, 5)
     .map(word => ({ word: word.trim(), type: fallbackType, theme: this.state.currentTheme }));
@@ -227,16 +230,16 @@ class SentenceBuilder {
     }
 
     this._showMessage('Thinking...', 'bg-info');
-
     const currentSentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
-
-    if (nextPart !== 'punctuation') {
-      const aiWords = await getAIWords.call(this, currentSentence, nextPart, this.state.currentTheme);
-      this.state.wordBank = aiWords;
+    
+    let words;
+    if (['determiner', 'preposition', 'punctuation'].includes(nextPart)) {
+      words = this.state.allWordsData.miscWords[nextPart].map(word => ({ word: word, type: nextPart, theme: this.state.currentTheme }));
     } else {
-      this.state.wordBank = this.state.allWordsData.words.punctuation;
+      words = await getAIWords.call(this, currentSentence, nextPart, this.state.currentTheme);
     }
 
+    this.state.wordBank = words;
     this._renderWordBank();
   }
 
@@ -260,7 +263,7 @@ class SentenceBuilder {
       button.textContent = wordObj.word;
       button.dataset.type = wordObj.type;
       const colorClass = colorMap[wordObj.type] || colorMap['other'];
-      button.className = `word-button squircle ${colorClass}-color fade-in`; // Add fade-in animation
+      button.className = `word-button squircle ${colorClass} fade-in`; // Add fade-in animation
       this.elements.wordBankContainer.appendChild(button);
     });
     this._hideMessage();
@@ -287,7 +290,7 @@ class SentenceBuilder {
         const span = document.createElement('span');
         span.textContent = wordObj.word;
         const colorClass = colorMap[wordObj.type] || colorMap['other'];
-        span.className = `sentence-word ${colorClass}-color fade-in`;
+        span.className = `sentence-word ${colorClass} fade-in`;
         this.elements.sentenceDisplay.appendChild(span);
 
         if (index < this.state.sentenceWordsArray.length - 1 && this.state.sentenceWordsArray[index+1].type !== 'punctuation') {
