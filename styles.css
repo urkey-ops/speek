@@ -40,65 +40,38 @@ body {
 
 .base-button:hover, .word-button:hover, .theme-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-}
-
-.base-button:active, .word-button:active, .theme-button:active {
-  transform: translateY(2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.word-button {
-  min-height: 50px;
-  padding: 0.75rem 1.5rem;
-  border: 2px solid transparent;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  font-size: 1.25rem;
-}
-
-.word-button:hover {
-  border-color: rgba(0,0,0,0.2);
-}
-
-.theme-button {
-  padding: 1.5rem 3rem;
-  background-color: #fff;
-  font-size: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.emoji {
-  font-size: 2rem;
 }
 
 .action-button {
-    padding: 0.75rem 1.5rem;
-    background-color: #fff;
-    border-radius: 9999px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    font-size: 1rem;
-    color: #4a5568;
+  @apply base-button px-6 py-3 text-lg rounded-full text-white bg-indigo-500 hover:bg-indigo-600;
 }
 
-/* Consolidated color palette for words */
-.noun-color { background-color: #90EE90; } /* Light Green */
-.verb-color { background-color: #ADD8E6; } /* Light Blue */
-.adjective-color { background-color: #FFB6C1; } /* Light Pink */
-.determiner-color { background-color: #FFD700; } /* Gold */
-.preposition-color { background-color: #DDA0DD; } /* Plum */
-.punctuation-color { background-color: #A9A9A9; } /* Dark Gray */
-.other-color { background-color: #f0f0f0; } /* Light Gray */
+.theme-button {
+  @apply base-button px-8 py-5 text-xl rounded-[2.5rem] bg-indigo-400 text-white shadow-lg;
+}
 
-/* Word colors in the sentence */
-.sentence-word {
-  padding: 0.5rem 1rem;
-  border-radius: 0.75rem;
+.word-button {
+  @apply base-button px-5 py-3 text-lg rounded-full shadow-md;
   color: #fff;
-  font-weight: bold;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }
 
-.sentence-word.noun-color { background-color: #6a9c6a; }
+/* Color-coded buttons */
+.word-button.noun-color { background-color: #8cc366; }
+.word-button.verb-color { background-color: #5aa6cc; }
+.word-button.adjective-color { background-color: #e691a0; }
+.word-button.determiner-color { background-color: #e6b800; }
+.word-button.preposition-color { background-color: #a074a0; }
+.word-button.punctuation-color { background-color: #696969; }
+.word-button.other-color { background-color: #b0b0b0; }
+
+/* Sentence words */
+.sentence-word {
+  @apply font-bold px-3 py-1 rounded-full text-white shadow-sm;
+  display: inline-block;
+}
+
+.sentence-word.noun-color { background-color: #8cc366; }
 .sentence-word.verb-color { background-color: #5aa6cc; }
 .sentence-word.adjective-color { background-color: #e691a0; }
 .sentence-word.determiner-color { background-color: #e6b800; }
@@ -134,11 +107,29 @@ body {
 }
 
 .message-box.bg-success { background-color: #d4edda; color: #155724; }
-.message-box.bg-info { background-color: #d1ecf1; color: #0c5460; }
+.message-box.bg-info { background-color: #cce5ff; color: #004085; }
 .message-box.bg-warning { background-color: #fff3cd; color: #856404; }
+.message-box.bg-danger { background-color: #f8d7da; color: #721c24; }
+
+/* Progress Bar */
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #e2e8f0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background-color: #6366f1;
+    transition: width 0.3s ease-in-out;
+    border-radius: 5px;
+}
 
 .fade-in {
-  animation: fadeIn 0.5s ease-in-out;
+  animation: fadeIn 0.5s ease-in;
 }
 
 @keyframes fadeIn {
@@ -146,17 +137,7 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.progress-bar-container {
-  width: 100%;
-  height: 10px;
-  background-color: #e5e5e5;
-  border-radius: 5px;
-  overflow: hidden;
-  margin-top: 1rem;
-}
-
-.progress-fill {
-  height: 100%;
-  background-color: #4CAF50;
-  transition: width 0.5s ease-in-out;
+/* Emoji size for theme buttons */
+.emoji {
+    font-size: 2rem;
 }
