@@ -4,7 +4,7 @@
 
 body {
   font-family: var(--font-display);
-  background-color: #ffe6f0; /* Soft, playful pink background */
+  background-color: #ffe6f0;
   background-image: radial-gradient(#fff5f9 1px, transparent 1px), radial-gradient(#fff5f9 1px, transparent 1px);
   background-size: 20px 20px;
   background-position: 0 0, 10px 10px;
@@ -14,19 +14,21 @@ body {
   border-radius: 2rem;
 }
 
-/* New background classes for API vs. JSON */
+/* New background classes */
 .bg-api {
-  background-color: #e0e7ff; /* A soft, light blue for API */
+  background-color: #e0e7ff;
   transition: background-color 0.5s ease;
 }
 
 .bg-json {
-  background-color: #fff9e6; /* A soft, light yellow for JSON */
+  background-color: #fff9e6;
   transition: background-color 0.5s ease;
 }
 
-/* Consolidated button styles */
-.base-button, .word-button, .theme-button {
+/* Base button style */
+.base-button,
+.word-button,
+.theme-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -38,53 +40,97 @@ body {
   font-family: var(--font-display);
 }
 
-.base-button:hover, .word-button:hover, .theme-button:hover {
+.base-button:hover,
+.word-button:hover,
+.theme-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+/* Action buttons */
 .action-button {
-  @apply base-button px-6 py-3 text-lg rounded-full text-white bg-indigo-500 hover:bg-indigo-600;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.125rem;
+  border-radius: 9999px;
+  color: white;
+  background-color: #6366f1;
 }
 
+.action-button:hover {
+  background-color: #4f46e5;
+}
+
+/* Theme button */
 .theme-button {
-  @apply base-button px-8 py-5 text-xl rounded-[2.5rem] bg-indigo-400 text-white shadow-lg;
+  padding: 1.25rem 2rem;
+  font-size: 1.25rem;
+  border-radius: 2.5rem;
+  background-color: #818cf8;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+/* Word buttons */
 .word-button {
-  @apply base-button px-5 py-3 text-lg rounded-full shadow-md;
-  color: #fff;
+  padding: 0.75rem 1.25rem;
+  font-size: 1.125rem;
+  border-radius: 9999px;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Color-coded buttons */
-.word-button.noun-color { background-color: #8cc366; }
-.word-button.verb-color { background-color: #5aa6cc; }
-.word-button.adjective-color { background-color: #e691a0; }
-.word-button.determiner-color { background-color: #e6b800; }
-.word-button.preposition-color { background-color: #a074a0; }
-.word-button.punctuation-color { background-color: #696969; }
-.word-button.other-color { background-color: #b0b0b0; }
-
-/* Sentence words */
-.sentence-word {
-  @apply font-bold px-3 py-1 rounded-full text-white shadow-sm;
-  display: inline-block;
+.word-button.noun-color,
+.sentence-word.noun-color {
+  background-color: #8cc366;
 }
 
-.sentence-word.noun-color { background-color: #8cc366; }
-.sentence-word.verb-color { background-color: #5aa6cc; }
-.sentence-word.adjective-color { background-color: #e691a0; }
-.sentence-word.determiner-color { background-color: #e6b800; }
-.sentence-word.preposition-color { background-color: #a074a0; }
-.sentence-word.punctuation-color { background-color: #696969; }
-.sentence-word.other-color { background-color: #b0b0b0; }
+.word-button.verb-color,
+.sentence-word.verb-color {
+  background-color: #5aa6cc;
+}
+
+.word-button.adjective-color,
+.sentence-word.adjective-color {
+  background-color: #e691a0;
+}
+
+.word-button.determiner-color,
+.sentence-word.determiner-color {
+  background-color: #e6b800;
+}
+
+.word-button.preposition-color,
+.sentence-word.preposition-color {
+  background-color: #a074a0;
+}
+
+.word-button.punctuation-color,
+.sentence-word.punctuation-color {
+  background-color: #696969;
+}
+
+.word-button.other-color,
+.sentence-word.other-color {
+  background-color: #b0b0b0;
+}
+
+/* Sentence word */
+.sentence-word {
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+}
 
 .placeholder-text {
   color: #a0a0a0;
   font-style: italic;
 }
 
-/* Message Box */
+/* Message box */
 .message-box {
   position: absolute;
   top: 1rem;
@@ -92,7 +138,7 @@ body {
   transform: translateX(-50%) translateY(-150%);
   padding: 0.75rem 1.5rem;
   border-radius: 9999px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   font-weight: bold;
   transition: all 0.5s ease-in-out;
   opacity: 0;
@@ -106,26 +152,41 @@ body {
   visibility: visible;
 }
 
-.message-box.bg-success { background-color: #d4edda; color: #155724; }
-.message-box.bg-info { background-color: #cce5ff; color: #004085; }
-.message-box.bg-warning { background-color: #fff3cd; color: #856404; }
-.message-box.bg-danger { background-color: #f8d7da; color: #721c24; }
+.message-box.bg-success {
+  background-color: #d4edda;
+  color: #155724;
+}
 
-/* Progress Bar */
+.message-box.bg-info {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+.message-box.bg-warning {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.message-box.bg-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Progress bar */
 .progress-bar {
-    width: 100%;
-    height: 10px;
-    background-color: #e2e8f0;
-    border-radius: 5px;
-    overflow: hidden;
+  width: 100%;
+  height: 10px;
+  background-color: #e2e8f0;
+  border-radius: 5px;
+  overflow: hidden;
 }
 
 .progress-fill {
-    height: 100%;
-    width: 0%;
-    background-color: #6366f1;
-    transition: width 0.3s ease-in-out;
-    border-radius: 5px;
+  height: 100%;
+  width: 0%;
+  background-color: #6366f1;
+  transition: width 0.3s ease-in-out;
+  border-radius: 5px;
 }
 
 .fade-in {
@@ -133,11 +194,16 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Emoji size for theme buttons */
 .emoji {
-    font-size: 2rem;
+  font-size: 2rem;
 }
