@@ -181,47 +181,49 @@ class SentenceBuilder {
   async _getAIWords(sentence, nextPartType, theme) {
     const prompt = `You are a helpful language model assistant. Given the partial sentence "${sentence}", please suggest a list of 5-7 words that could come next. The next word should be a "${nextPartType}". If there is a theme, like "${theme}", try to suggest words related to it. Respond with ONLY a comma-separated list of lowercase words, like "word1, word2, word3".`;
 
+    let words = [];
     try {
       const response = await callGeminiAPI(prompt);
       const text = findTextInResponse(response);
 
-      // Robust check for valid words
       if (text) {
-        const isValidResponse = text.trim().length > 0 && 
-                                !text.includes('_') && 
-                                !text.includes('Ea');
+        const wordsArray = text.split(',').map(word => ({ word: word.trim(), type: nextPartType, theme: theme }));
+        
+        // Filter out any empty strings or invalid words
+        words = wordsArray.filter(wordObj => wordObj.word.length > 0 && !wordObj.word.includes('invalid'));
 
-        if (isValidResponse) {
-          return text.split(',').map(word => ({ word: word.trim(), type: nextPartType, theme: theme }));
+        if (words.length > 0) {
+            this._showMessage('Got it! Here are some new words.', 'bg-success');
+            return words;
         }
       }
-
     } catch (error) {
       console.error('Failed to get AI words:', error);
     }
     
-    // Return a static, non-AI list of words if the AI fails
-    const level = LEARNING_LEVELS[this.state.currentLevel];
-    const fallbackType = level.structure[this.state.sentenceWordsArray.length];
-
-    // Logic to handle fallback words based on the new JSON structure
-    let fallbackWords = [];
-    if (['determiner', 'preposition', 'punctuation'].includes(fallbackType)) {
-        fallbackWords = this.state.allWordsData.miscWords[fallbackType];
-    } else {
-        fallbackWords = this.state.allWordsData.words[fallbackType][this.state.currentTheme];
+    // Fallback logic
+    const fallbackWords = [];
+    if (this.state.allWordsData.words.hasOwnProperty(nextPartType)) {
+      if (['determiner', 'preposition', 'punctuation'].includes(nextPartType)) {
+        this.state.allWordsData.words[nextPartType].forEach(word => {
+          fallbackWords.push({ word: word, type: nextPartType, theme: theme });
+        });
+      } else if (this.state.allWordsData.words[nextPartType].hasOwnProperty(this.state.currentTheme)) {
+        this.state.allWordsData.words[nextPartType][this.state.currentTheme].forEach(word => {
+          fallbackWords.push({ word: word, type: nextPartType, theme: theme });
+        });
+      }
     }
     
     // Get a random sample of words for a fallback list
     const randomWords = fallbackWords
       .sort(() => 0.5 - Math.random())
-      .slice(0, 5)
-      .map(word => ({ word: word.trim(), type: fallbackType, theme: this.state.currentTheme }));
+      .slice(0, 5);
 
-    // Show a message to the user that the app is using a fallback
     this._showMessage('Hmm, having trouble. Here are some words!', 'bg-info');
     return randomWords;
   }
+
 
   async _fetchNextWords() {
     const level = LEARNING_LEVELS[this.state.currentLevel];
@@ -237,14 +239,7 @@ class SentenceBuilder {
     this._showMessage('Thinking...', 'bg-info');
     const currentSentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
     
-    let words;
-    if (['determiner', 'preposition', 'punctuation'].includes(nextPart)) {
-      words = this.state.allWordsData.miscWords[nextPart].map(word => ({ word: word, type: nextPart, theme: this.state.currentTheme }));
-    } else {
-      words = await this._getAIWords(currentSentence, nextPart, this.state.currentTheme);
-    }
-
-    this.state.wordBank = words;
+    this.state.wordBank = await this._getAIWords(currentSentence, nextPart, this.state.currentTheme);
     this._renderWordBank();
   }
 
