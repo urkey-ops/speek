@@ -244,20 +244,24 @@ class SentenceBuilder {
     this._renderWordBank();
   }
 
-  // --- Render with Color-Coding ---
-  _renderWordBank() {
-    this.elements.wordBankContainer.innerHTML = '';
-    const colorMap = this.state.allWordsData.typeColors;
-    
-    // Sort words to present them in a consistent, alphabetical order
-    const sortedWords = [...this.state.wordBank].sort((a, b) => a.word.localeCompare(b.word));
+// --- Render with Color-Coding ---
+_handleWordClick(wordElement) {
+  const wordObj = {
+    word: wordElement.textContent,
+    type: wordElement.dataset.type
+  };
+  this.state.sentenceWordsArray.push(wordObj);
+  this._renderSentence();
 
-    if (sortedWords.length === 0) {
-      // Display a message if no words are available
-      this.elements.wordBankContainer.innerHTML = '<p class="text-gray-500 italic">No words available. Try going back or refreshing the page.</p>';
-      this._hideMessage();
-      return;
-    }
+  // Check if the added word is a punctuation mark
+  if (wordObj.type === 'punctuation') {
+    // If it is, the sentence is complete. Check and validate it immediately.
+    this._handleHighFiveClick();
+  } else {
+    // If not, continue fetching the next words as usual.
+    this._fetchNextWords();
+  }
+}
 
     sortedWords.forEach(wordObj => {
       const button = document.createElement('button');
