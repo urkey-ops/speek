@@ -121,7 +121,7 @@ class SentenceBuilder {
 
     async init() {
         try {
-            const response = await fetch('https://gist.githubusercontent.com/Anand-M-S/00a72691458e0a87f174241065f4d852/raw/4e6e613b56a3120155b995efb5f2a1b9d4a3b798/words.json');
+            const response = await fetch('https://cdn.jsdelivr.net/gh/google-gemini/apps/sentence-lab/words.json');
             if (!response.ok) throw new Error('words.json not found');
             this.state.allWordsData = await response.json();
             this._renderThemeSelector();
@@ -322,14 +322,7 @@ class SentenceBuilder {
             this._showMessage('Hmm, I can’t check that sentence right now. Let’s try a new one! 👍', 'bg-warning', 4000);
             
             setTimeout(() => {
-                this.state.sentencesCompletedAtLevel++; 
-                const level = LEARNING_LEVELS[this.state.currentLevel];
-                if (this.state.sentencesCompletedAtLevel >= level.threshold) {
-                    this._levelUp();
-                } else {
-                    this._clearSentence();
-                    this._updateInstructionText();
-                }
+                this._handleValidSentence();
             }, 4000); 
         } finally {
             this.elements.highFiveBtn.disabled = false;
