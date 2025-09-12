@@ -2,7 +2,7 @@
   "themes": [
     {
       "name": "Animals",
-      "emoji": "🐼"
+      "emoji": "🐾"
     },
     {
       "name": "Space",
@@ -10,11 +10,11 @@
     },
     {
       "name": "Food",
-      "emoji": "🍔"
+      "emoji": "🍕"
     },
     {
       "name": "School",
-      "emoji": "✏️"
+      "emoji": "🎒"
     }
   ],
   "typeColors": {
@@ -40,13 +40,15 @@
       "School": ["learns", "reads", "writes", "plays", "listens", "studies"]
     },
     "adjective": {
-      "Animals": ["big", "small", "fluffy", "fast", "cute", "striped"],
-      "Space": ["shiny", "bright", "huge", "dark", "mysterious"],
-      "Food": ["tasty", "sweet", "crunchy", "hot", "cold", "delicious"],
-      "School": ["smart", "quiet", "new", "old", "hard", "easy"]
-    },
-    "determiner": ["a", "the", "this", "that", "these", "those"],
-    "preposition": ["in", "on", "at", "by", "from", "with", "around"],
+      "Animals": ["big", "small", "fluffy", "scary", "friendly", "fast"],
+      "Space": ["bright", "dark", "giant", "shiny", "mysterious"],
+      "Food": ["sweet", "salty", "fresh", "delicious", "hot"],
+      "School": ["hard", "easy", "long", "short", "fun", "boring"]
+    }
+  },
+  "miscWords": {
+    "determiner": ["a", "the", "an"],
+    "preposition": ["in", "on", "under", "with", "near"],
     "punctuation": [".", "!", "?"]
   }
 }
