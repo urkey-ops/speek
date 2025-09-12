@@ -21,7 +21,7 @@ body {
 }
 
 .bg-json {
-  background-color: #fff9e6; /* A soft, light yellow for JSON */
+  background-color: #e31776; /* A soft, light yellow for JSON */
   transition: background-color 0.5s ease;
 }
 
@@ -52,7 +52,7 @@ body {
 }
 
 .word-button {
-  @apply base-button px-5 py-3 text-lg rounded-full shadow-md;
+  @apply base-button px-8 py-5 text-lg rounded-full shadow-md;
   color: #fff;
 }
 
