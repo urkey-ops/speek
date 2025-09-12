@@ -2,7 +2,7 @@
   "themes": [
     {
       "name": "Animals",
-      "emoji": "🦁"
+      "emoji": "🐾"
     },
     {
       "name": "Space",
@@ -14,7 +14,7 @@
     },
     {
       "name": "School",
-      "emoji": "🏫"
+      "emoji": "🎒"
     }
   ],
   "typeColors": {
@@ -40,13 +40,60 @@
       "School": ["learns", "reads", "writes", "plays", "listens", "studies"]
     },
     "adjective": {
-      "Animals": ["big", "small", "fluffy", "fast", "cute", "striped"],
-      "Space": ["shiny", "bright", "huge", "dark", "mysterious"],
-      "Food": ["tasty", "sweet", "crunchy", "hot", "cold", "delicious"],
-      "School": ["smart", "quiet", "new", "old", "hard", "easy"]
+      "Animals": ["big", "small", "fluffy", "scary", "friendly", "fast"],
+      "Space": ["bright", "dark", "giant", "shiny", "mysterious"],
+      "Food": ["sweet", "salty", "fresh", "delicious", "hot"],
+      "School": ["hard", "easy", "long", "short", "fun", "boring"]
     },
-    "determiner": ["a", "the", "this", "that", "these", "those"],
-    "preposition": ["in", "on", "at", "by", "from", "with", "around"],
-    "punctuation": [".", "!", "?"]
+    "determiner": [
+      {
+        "word": "a",
+        "type": "determiner"
+      },
+      {
+        "word": "the",
+        "type": "determiner"
+      },
+      {
+        "word": "an",
+        "type": "determiner"
+      }
+    ],
+    "preposition": [
+      {
+        "word": "in",
+        "type": "preposition"
+      },
+      {
+        "word": "on",
+        "type": "preposition"
+      },
+      {
+        "word": "under",
+        "type": "preposition"
+      },
+      {
+        "word": "with",
+        "type": "preposition"
+      },
+      {
+        "word": "near",
+        "type": "preposition"
+      }
+    ],
+    "punctuation": [
+      {
+        "word": ".",
+        "type": "punctuation"
+      },
+      {
+        "word": "!",
+        "type": "punctuation"
+      },
+      {
+        "word": "?",
+        "type": "punctuation"
+      }
+    ]
   }
 }
