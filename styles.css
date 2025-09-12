@@ -1,11 +1,15 @@
 :root {
   --font-display: 'Comic Neue', cursive;
+  --font-size-base: clamp(1.25rem, 2vw, 1.5rem); /* 20–24px */
+  --font-size-large: clamp(1.5rem, 3vw, 2rem);  /* 24–32px */
+  --font-size-xl: clamp(2rem, 4vw, 2.5rem);     /* 32–40px */
 }
 
 body {
   font-family: var(--font-display);
   background-color: #ffe6f0;
-  background-image: radial-gradient(#fff5f9 1px, transparent 1px), radial-gradient(#fff5f9 1px, transparent 1px);
+  background-image: radial-gradient(#fff5f9 1px, transparent 1px),
+                    radial-gradient(#fff5f9 1px, transparent 1px);
   background-size: 20px 20px;
   background-position: 0 0, 10px 10px;
 }
@@ -14,7 +18,6 @@ body {
   border-radius: 2rem;
 }
 
-/* New background classes */
 .bg-api {
   background-color: #e0e7ff;
   transition: background-color 0.5s ease;
@@ -25,7 +28,7 @@ body {
   transition: background-color 0.5s ease;
 }
 
-/* Base button style */
+/* BUTTON BASE STYLES */
 .base-button,
 .word-button,
 .theme-button {
@@ -34,10 +37,14 @@ body {
   justify-content: center;
   gap: 0.5rem;
   font-weight: bold;
-  transition: all 0.2s ease-in-out;
+  font-size: var(--font-size-base);
+  padding: 1rem 1.5rem;
   border: none;
   cursor: pointer;
   font-family: var(--font-display);
+  transition: all 0.2s ease-in-out;
+  min-height: 56px;
+  min-width: 56px;
 }
 
 .base-button:hover,
@@ -47,99 +54,64 @@ body {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Action buttons */
 .action-button {
-  padding: 0.75rem 1.5rem;
-  font-size: 1.125rem;
-  border-radius: 9999px;
-  color: white;
-  background-color: #6366f1;
+  @apply base-button text-white bg-indigo-500 hover:bg-indigo-600 rounded-full;
 }
 
-.action-button:hover {
-  background-color: #4f46e5;
-}
-
-/* Theme button */
 .theme-button {
-  padding: 1.25rem 2rem;
-  font-size: 1.25rem;
-  border-radius: 2.5rem;
-  background-color: #818cf8;
-  color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  @apply base-button bg-indigo-400 text-white shadow-lg rounded-[2.5rem];
+  font-size: var(--font-size-large);
+  padding: 1.5rem 2.5rem;
 }
 
-/* Word buttons */
 .word-button {
-  padding: 0.75rem 1.25rem;
-  font-size: 1.125rem;
-  border-radius: 9999px;
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  @apply base-button shadow-md rounded-full;
+  font-size: var(--font-size-large);
+  padding: 1.25rem 2rem;
+  color: #fff;
 }
 
 /* Color-coded buttons */
-.word-button.noun-color,
-.sentence-word.noun-color {
-  background-color: #8cc366;
-}
+.word-button.noun-color { background-color: #8cc366; }
+.word-button.verb-color { background-color: #5aa6cc; }
+.word-button.adjective-color { background-color: #e691a0; }
+.word-button.determiner-color { background-color: #e6b800; }
+.word-button.preposition-color { background-color: #a074a0; }
+.word-button.punctuation-color { background-color: #696969; }
+.word-button.other-color { background-color: #b0b0b0; }
 
-.word-button.verb-color,
-.sentence-word.verb-color {
-  background-color: #5aa6cc;
-}
-
-.word-button.adjective-color,
-.sentence-word.adjective-color {
-  background-color: #e691a0;
-}
-
-.word-button.determiner-color,
-.sentence-word.determiner-color {
-  background-color: #e6b800;
-}
-
-.word-button.preposition-color,
-.sentence-word.preposition-color {
-  background-color: #a074a0;
-}
-
-.word-button.punctuation-color,
-.sentence-word.punctuation-color {
-  background-color: #696969;
-}
-
-.word-button.other-color,
-.sentence-word.other-color {
-  background-color: #b0b0b0;
-}
-
-/* Sentence word */
+/* Sentence words */
 .sentence-word {
-  font-weight: bold;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  @apply font-bold px-3 py-2 rounded-full text-white shadow-sm;
   display: inline-block;
+  font-size: var(--font-size-large);
 }
+
+.sentence-word.noun-color { background-color: #8cc366; }
+.sentence-word.verb-color { background-color: #5aa6cc; }
+.sentence-word.adjective-color { background-color: #e691a0; }
+.sentence-word.determiner-color { background-color: #e6b800; }
+.sentence-word.preposition-color { background-color: #a074a0; }
+.sentence-word.punctuation-color { background-color: #696969; }
+.sentence-word.other-color { background-color: #b0b0b0; }
 
 .placeholder-text {
   color: #a0a0a0;
   font-style: italic;
+  font-size: var(--font-size-base);
 }
 
-/* Message box */
+/* Message Box */
 .message-box {
   position: absolute;
   top: 1rem;
   left: 50%;
   transform: translateX(-50%) translateY(-150%);
-  padding: 0.75rem 1.5rem;
+  padding: 1rem 2rem;
   border-radius: 9999px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   font-weight: bold;
+  font-size: var(--font-size-base);
   transition: all 0.5s ease-in-out;
   opacity: 0;
   visibility: hidden;
@@ -152,32 +124,17 @@ body {
   visibility: visible;
 }
 
-.message-box.bg-success {
-  background-color: #d4edda;
-  color: #155724;
-}
+.message-box.bg-success { background-color: #d4edda; color: #155724; }
+.message-box.bg-info { background-color: #cce5ff; color: #004085; }
+.message-box.bg-warning { background-color: #fff3cd; color: #856404; }
+.message-box.bg-danger { background-color: #f8d7da; color: #721c24; }
 
-.message-box.bg-info {
-  background-color: #cce5ff;
-  color: #004085;
-}
-
-.message-box.bg-warning {
-  background-color: #fff3cd;
-  color: #856404;
-}
-
-.message-box.bg-danger {
-  background-color: #f8d7da;
-  color: #721c24;
-}
-
-/* Progress bar */
+/* Progress Bar */
 .progress-bar {
   width: 100%;
-  height: 10px;
+  height: 12px;
   background-color: #e2e8f0;
-  border-radius: 5px;
+  border-radius: 6px;
   overflow: hidden;
 }
 
@@ -186,7 +143,7 @@ body {
   width: 0%;
   background-color: #6366f1;
   transition: width 0.3s ease-in-out;
-  border-radius: 5px;
+  border-radius: 6px;
 }
 
 .fade-in {
@@ -194,16 +151,11 @@ body {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
+/* Emoji size for theme buttons */
 .emoji {
-  font-size: 2rem;
+  font-size: 2.5rem;
 }
