@@ -76,6 +76,52 @@ const LEARNING_LEVELS = {
   },
 };
 
+// This function will be called to get words from the AI
+async function getAIWords(sentence, nextPartType, theme) {
+  const prompt = `You are a helpful language model assistant. Given the partial sentence "${sentence}", please suggest a list of 5-7 words that could come next. The next word should be a "${nextPartType}". If there is a theme, like "${theme}", try to suggest words related to it. Respond with ONLY a comma-separated list of lowercase words, like "word1, word2, word3".`;
+
+  try {
+    const response = await callGeminiAPI(prompt);
+    const text = findTextInResponse(response);
+
+    // Robust check for valid words
+    if (text) {
+      const isValidResponse = text.trim().length > 0 && 
+                              !text.includes('_') && 
+                              !text.includes('Ea');
+
+      if (isValidResponse) {
+        return text.split(',').map(word => ({ word: word.trim(), type: nextPartType, theme: theme }));
+      }
+    }
+
+  } catch (error) {
+    console.error('Failed to get AI words:', error);
+  }
+  
+  // Return a static, non-AI list of words if the AI fails
+  const level = LEARNING_LEVELS[this.state.currentLevel];
+  const fallbackType = level.structure[this.state.sentenceWordsArray.length];
+
+  // Logic to handle fallback words based on the new JSON structure
+  let fallbackWords = [];
+  if (['determiner', 'preposition', 'punctuation'].includes(fallbackType)) {
+      fallbackWords = this.state.allWordsData.miscWords[fallbackType];
+  } else {
+      fallbackWords = this.state.allWordsData.words[fallbackType][this.state.currentTheme];
+  }
+  
+  // Get a random sample of words for a fallback list
+  const randomWords = fallbackWords
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 5)
+    .map(word => ({ word: word.trim(), type: fallbackType, theme: this.state.currentTheme }));
+
+  // Show a message to the user that the app is using a fallback
+  this._showMessage('Hmm, having trouble. Here are some words!', 'bg-info');
+  return randomWords;
+}
+
 
 class SentenceBuilder {
   constructor() {
@@ -138,7 +184,7 @@ class SentenceBuilder {
   _renderThemeSelector() {
     this.state.allWordsData.themes.forEach(theme => {
       const button = document.createElement('button');
-      button.className = 'theme-button';
+      button.className = 'theme-button squircle';
       button.innerHTML = `<span class="emoji">${theme.emoji}</span>${theme.name}`;
       button.dataset.theme = theme.name;
       button.addEventListener('click', () => this._selectTheme(theme.name));
@@ -148,15 +194,9 @@ class SentenceBuilder {
 
   _selectTheme(themeName) {
     this.state.currentTheme = themeName;
-    
-    // Animate themeSelector out
-    this.elements.themeSelector.classList.remove('transition-all', 'duration-700', 'ease-in-out');
-    this.elements.themeSelector.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
-
-    // Animate appContainer in
-    this.elements.appContainer.classList.remove('hidden', 'opacity-0', 'scale-95', 'pointer-events-none');
-    this.elements.appContainer.classList.add('active'); 
-    
+    this.elements.themeSelector.classList.add('hidden');
+    this.elements.appContainer.classList.remove('hidden');
+    this.elements.appContainer.classList.add('flex');
     this._startLevel();
   }
 
@@ -178,53 +218,6 @@ class SentenceBuilder {
   }
 
   // --- Contextual Word Logic using AI ---
-  async _getAIWords(sentence, nextPartType, theme) {
-    const prompt = `You are a helpful language model assistant. Given the partial sentence "${sentence}", please suggest a list of 5-7 words that could come next. The next word should be a "${nextPartType}". If there is a theme, like "${theme}", try to suggest words related to it. Respond with ONLY a comma-separated list of lowercase words, like "word1, word2, word3".`;
-
-    let words = [];
-    try {
-      const response = await callGeminiAPI(prompt);
-      const text = findTextInResponse(response);
-
-      if (text) {
-        const wordsArray = text.split(',').map(word => ({ word: word.trim(), type: nextPartType, theme: theme }));
-        
-        // Filter out any empty strings or invalid words
-        words = wordsArray.filter(wordObj => wordObj.word.length > 0 && !wordObj.word.includes('invalid'));
-
-        if (words.length > 0) {
-            this._showMessage('Got it! Here are some new words.', 'bg-success');
-            return words;
-        }
-      }
-    } catch (error) {
-      console.error('Failed to get AI words:', error);
-    }
-    
-    // Fallback logic
-    const fallbackWords = [];
-    if (this.state.allWordsData.words.hasOwnProperty(nextPartType)) {
-      if (['determiner', 'preposition', 'punctuation'].includes(nextPartType)) {
-        this.state.allWordsData.words[nextPartType].forEach(word => {
-          fallbackWords.push({ word: word, type: nextPartType, theme: theme });
-        });
-      } else if (this.state.allWordsData.words[nextPartType].hasOwnProperty(this.state.currentTheme)) {
-        this.state.allWordsData.words[nextPartType][this.state.currentTheme].forEach(word => {
-          fallbackWords.push({ word: word, type: nextPartType, theme: theme });
-        });
-      }
-    }
-    
-    // Get a random sample of words for a fallback list
-    const randomWords = fallbackWords
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 5);
-
-    this._showMessage('Hmm, having trouble. Here are some words!', 'bg-info');
-    return randomWords;
-  }
-
-
   async _fetchNextWords() {
     const level = LEARNING_LEVELS[this.state.currentLevel];
     const nextPartIndex = this.state.sentenceWordsArray.length;
@@ -239,7 +232,14 @@ class SentenceBuilder {
     this._showMessage('Thinking...', 'bg-info');
     const currentSentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
     
-    this.state.wordBank = await this._getAIWords(currentSentence, nextPart, this.state.currentTheme);
+    let words;
+    if (['determiner', 'preposition', 'punctuation'].includes(nextPart)) {
+      words = this.state.allWordsData.miscWords[nextPart].map(word => ({ word: word, type: nextPart, theme: this.state.currentTheme }));
+    } else {
+      words = await getAIWords.call(this, currentSentence, nextPart, this.state.currentTheme);
+    }
+
+    this.state.wordBank = words;
     this._renderWordBank();
   }
 
@@ -253,7 +253,7 @@ class SentenceBuilder {
 
     if (sortedWords.length === 0) {
       // Display a message if no words are available
-      this.elements.wordBankContainer.innerHTML = '<p class="text-gray-500 italic text-xl">No words here! Tap "Shuffle" or "Go Back".</p>';
+      this.elements.wordBankContainer.innerHTML = '<p class="text-gray-500 italic">No words available. Try going back or refreshing the page.</p>';
       this._hideMessage();
       return;
     }
@@ -263,7 +263,7 @@ class SentenceBuilder {
       button.textContent = wordObj.word;
       button.dataset.type = wordObj.type;
       const colorClass = colorMap[wordObj.type] || colorMap['other'];
-      button.className = `word-button ${colorClass}`;
+      button.className = `word-button squircle ${colorClass} fade-in`; // Add fade-in animation
       this.elements.wordBankContainer.appendChild(button);
     });
     this._hideMessage();
@@ -284,13 +284,13 @@ class SentenceBuilder {
     const colorMap = this.state.allWordsData.typeColors;
 
     if (this.state.sentenceWordsArray.length === 0) {
-      this.elements.sentenceDisplay.innerHTML = '<span class="placeholder-text text-[#80CBC4]">Tap a word to start planting!</span>';
+      this.elements.sentenceDisplay.innerHTML = '<span class="placeholder-text">Click a word below to begin...</span>';
     } else {
       this.state.sentenceWordsArray.forEach((wordObj, index) => {
         const span = document.createElement('span');
         span.textContent = wordObj.word;
         const colorClass = colorMap[wordObj.type] || colorMap['other'];
-        span.className = `sentence-word ${colorClass}`;
+        span.className = `sentence-word ${colorClass} fade-in`;
         this.elements.sentenceDisplay.appendChild(span);
 
         if (index < this.state.sentenceWordsArray.length - 1 && this.state.sentenceWordsArray[index+1].type !== 'punctuation') {
@@ -363,14 +363,10 @@ class SentenceBuilder {
             this._showMessage(hint, 'bg-info');
         }
     } catch (error) {
-        this._showMessage('Hmm, something is wrong. Let\'s try a new sentence!', 'bg-info');
-        
-        setTimeout(() => {
-            this._clearSentence();
-            this._updateInstructionText();
-        }, 3000);
-
+        // More specific error message for API failure
+        this._showMessage('Oops! Could not check the sentence. The API might be down or your key is invalid. Try again!', 'bg-warning');
     } finally {
+        // Re-enable the button after the check is complete (or has failed)
         this.elements.highFiveBtn.disabled = false;
         this._renderHighFiveButton();
     }
