@@ -161,6 +161,8 @@ class SentenceBuilder {
       readAloudBtn: document.getElementById('readAloudBtn'),
       messageBox: document.getElementById('messageBox'),
       shuffleWordsBtn: document.getElementById('shuffleWordsBtn'),
+      levelProgressText: document.getElementById('levelProgressText'),
+      progressFill: document.getElementById('progressFill'),
     };
   }
 
@@ -246,6 +248,13 @@ class SentenceBuilder {
     // Sort words to present them in a consistent, alphabetical order
     const sortedWords = [...this.state.wordBank].sort((a, b) => a.word.localeCompare(b.word));
 
+    if (sortedWords.length === 0) {
+      // Display a message if no words are available
+      this.elements.wordBankContainer.innerHTML = '<p class="text-gray-500 italic">No words available. Try going back or refreshing the page.</p>';
+      this._hideMessage();
+      return;
+    }
+
     sortedWords.forEach(wordObj => {
       const button = document.createElement('button');
       button.textContent = wordObj.word;
@@ -264,12 +273,7 @@ class SentenceBuilder {
     };
     this.state.sentenceWordsArray.push(wordObj);
     this._renderSentence();
-
-    if (wordObj.type === 'punctuation') {
-      this._handleHighFiveClick();
-    } else {
-      this._fetchNextWords();
-    }
+    this._fetchNextWords();
   }
 
   _renderSentence() {
@@ -324,6 +328,9 @@ class SentenceBuilder {
 
     const prompt = `You are a helpful language model. The sentence is "${sentenceText}". Is it grammatically complete? Answer with only one of these words: VALID or INVALID.`;
     
+    // Disable the button to prevent multiple clicks while checking
+    this.elements.highFiveBtn.disabled = true;
+    
     try {
         this._showMessage("Checking...", 'bg-info');
         const response = await callGeminiAPI(prompt);
@@ -353,15 +360,24 @@ class SentenceBuilder {
             this._showMessage(hint, 'bg-info');
         }
     } catch (error) {
-        this._showMessage('Could not check sentence. Try again!', 'bg-info');
+        // More specific error message for API failure
+        this._showMessage('Oops! Could not check the sentence. The API might be down or your key is invalid. Try again!', 'bg-warning');
+    } finally {
+        // Re-enable the button after the check is complete (or has failed)
+        this.elements.highFiveBtn.disabled = false;
+        this._renderHighFiveButton();
     }
   }
 
   _updateInstructionText() {
     const level = LEARNING_LEVELS[this.state.currentLevel];
     const remaining = level.threshold - this.state.sentencesCompletedAtLevel;
-    const goalText = `${level.goal} (${remaining} more to level up!)`;
-    this._showMessage(goalText, 'bg-info', 6000);
+    this.elements.levelProgressText.textContent = `${level.goal} (${remaining} more to level up!)`;
+    this._showMessage(this.elements.levelProgressText.textContent, 'bg-info', 6000);
+    
+    // Update progress bar
+    const progress = (this.state.sentencesCompletedAtLevel / level.threshold) * 100;
+    this.elements.progressFill.style.width = `${progress}%`;
   }
 
   _showMessage(text, className, duration = 3000) {
