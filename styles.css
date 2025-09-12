@@ -2,75 +2,95 @@
   --font-display: 'Comic Neue', cursive;
 }
 
+/* Body with a fresh, vibrant background pattern for a playful look */
 body {
   font-family: var(--font-display);
-  background-color: #ffe6f0; /* Soft, playful pink background */
-  background-image: radial-gradient(#fff5f9 1px, transparent 1px), radial-gradient(#fff5f9 1px, transparent 1px);
+  background-color: #ffe4e1; /* Light pastel pink */
+  background-image: 
+    radial-gradient(circle at 1px 1px, #ffd1dc 2px, transparent 2px),
+    radial-gradient(circle at 10px 10px, #ffd1dc 2px, transparent 2px);
   background-size: 20px 20px;
   background-position: 0 0, 10px 10px;
+  font-size: 1.125rem; /* Base font size for better readability */
+  margin: 0;
+  padding: 0;
 }
 
+/* Squircles for buttons and containers with friendly rounded corners */
 .squircle {
   border-radius: 2rem;
 }
 
-/* New background classes for API vs. JSON */
+/* Backgrounds for different sections with soft colors */
 .bg-api {
-  background-color: #e0e7ff; /* A soft, light blue for API */
+  background-color: #d0e0ff; /* Soft blue */
   transition: background-color 0.5s ease;
 }
 
 .bg-json {
-  background-color: #e31776; /* A soft, light yellow for JSON */
+  background-color: #f9d0ff; /* Soft purple-pink */
   transition: background-color 0.5s ease;
 }
 
-/* Consolidated button styles */
-.base-button, .word-button, .theme-button {
+/* Base button styles with larger, more approachable padding and font size */
+.base-button,
+.word-button,
+.theme-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  font-weight: bold;
+  gap: 0.75rem;
+  font-weight: 700;
   transition: all 0.2s ease-in-out;
   border: none;
   cursor: pointer;
   font-family: var(--font-display);
+  min-width: 50px;
+  min-height: 50px;
+  border-radius: 1.75rem; /* softer, more inviting shape */
+  padding: 1rem 2rem; /* larger touch target */
 }
 
-.base-button:hover, .word-button:hover, .theme-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
+/* Action button: large, friendly, vibrant */
 .action-button {
-  @apply base-button px-6 py-3 text-lg rounded-full text-white bg-indigo-500 hover:bg-indigo-600;
+  @apply base-button px-8 py-4 text-xl rounded-full text-white bg-pink-400 hover:bg-pink-500;
+  font-size: 1.5rem;
+  padding: 1.25rem 2.5rem;
 }
 
+/* Theme button: big and rounded with shadow for depth */
 .theme-button {
-  @apply base-button px-8 py-5 text-xl rounded-[2.5rem] bg-indigo-400 text-white shadow-lg;
+  @apply base-button px-10 py-6 text-2xl rounded-[2.5rem] bg-purple-400 text-white shadow-lg;
+  font-size: 1.75rem;
+  padding: 1.5rem 3rem;
 }
 
+/* Word buttons with bright, distinct colors for easy recognition */
 .word-button {
-  @apply base-button px-8 py-5 text-lg rounded-full shadow-md;
+  @apply base-button px-10 py-6 text-xl rounded-full shadow-md;
+  font-size: 1.25rem;
+  padding: 1rem 2rem;
   color: #fff;
 }
 
-/* Color-coded buttons */
-.word-button.noun-color { background-color: #8cc366; }
-.word-button.verb-color { background-color: #5aa6cc; }
-.word-button.adjective-color { background-color: #e691a0; }
-.word-button.determiner-color { background-color: #e6b800; }
-.word-button.preposition-color { background-color: #a074a0; }
-.word-button.punctuation-color { background-color: #696969; }
-.word-button.other-color { background-color: #b0b0b0; }
+/* Color-coded words for clarity and fun */
+.word-button.noun-color { background-color: #8cc366; }       /* Green for nouns */
+.word-button.verb-color { background-color: #5aa6cc; }       /* Blue for verbs */
+.word-button.adjective-color { background-color: #e691a0; }  /* Pink for adjectives */
+.word-button.determiner-color { background-color: #e6b800; } /* Gold for determiners */
+.word-button.preposition-color { background-color: #a074a0; } /* Purple for prepositions */
+.word-button.punctuation-color { background-color: #696969; }/* Dark gray for punctuation */
+.word-button.other-color { background-color: #b0b0b0; }       /* Neutral gray */
 
-/* Sentence words */
+/* Sentence words styled to be big, friendly, and colorful */
 .sentence-word {
-  @apply font-bold px-3 py-1 rounded-full text-white shadow-sm;
+  @apply font-bold px-4 py-2 rounded-full text-white shadow-sm;
   display: inline-block;
+  font-size: 1.5rem;
+  padding: 0.75rem 1.5rem;
 }
 
+/* Sentence word color classes for clarity and fun */
 .sentence-word.noun-color { background-color: #8cc366; }
 .sentence-word.verb-color { background-color: #5aa6cc; }
 .sentence-word.adjective-color { background-color: #e691a0; }
@@ -79,22 +99,25 @@ body {
 .sentence-word.punctuation-color { background-color: #696969; }
 .sentence-word.other-color { background-color: #b0b0b0; }
 
+/* Placeholder text: clear, friendly, slightly larger for readability */
 .placeholder-text {
-  color: #a0a0a0;
+  color: #404040; /* Dark enough for visibility on light backgrounds */
   font-style: italic;
+  font-size: 1rem;
 }
 
-/* Message Box */
+/* Message box: larger, more friendly appearance, easy to read */
 .message-box {
   position: absolute;
-  top: 1rem;
+  top: 2rem;
   left: 50%;
   transform: translateX(-50%) translateY(-150%);
-  padding: 0.75rem 1.5rem;
-  border-radius: 9999px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  font-weight: bold;
+  padding: 1.25rem 2.5rem;
+  border-radius: 2rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  font-weight: 700;
   transition: all 0.5s ease-in-out;
+  font-size: 1.25rem;
   opacity: 0;
   visibility: hidden;
   z-index: 100;
@@ -106,28 +129,31 @@ body {
   visibility: visible;
 }
 
+/* Message background colors for clarity and friendliness */
 .message-box.bg-success { background-color: #d4edda; color: #155724; }
 .message-box.bg-info { background-color: #cce5ff; color: #004085; }
 .message-box.bg-warning { background-color: #fff3cd; color: #856404; }
 .message-box.bg-danger { background-color: #f8d7da; color: #721c24; }
 
-/* Progress Bar */
+/* Progress bar: thicker for better touch interaction, with smooth fill */
 .progress-bar {
-    width: 100%;
-    height: 10px;
-    background-color: #e2e8f0;
-    border-radius: 5px;
-    overflow: hidden;
+  width: 100%;
+  height: 14px;
+  background-color: #e2e8f0;
+  border-radius: 7px;
+  overflow: hidden;
+  margin-top: 1rem;
 }
 
 .progress-fill {
-    height: 100%;
-    width: 0%;
-    background-color: #6366f1;
-    transition: width 0.3s ease-in-out;
-    border-radius: 5px;
+  height: 100%;
+  width: 0%;
+  background-color: #6366f1;
+  transition: width 0.3s ease-in-out;
+  border-radius: 7px;
 }
 
+/* Fade-in animations for smooth appearance */
 .fade-in {
   animation: fadeIn 0.5s ease-in;
 }
@@ -137,7 +163,53 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Emoji size for theme buttons */
+/* Emoji: larger size for visibility and touch friendliness */
 .emoji {
-    font-size: 2rem;
+  font-size: 3rem; /* Very large for kids' attention and easy tapping */
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 600px) {
+  body {
+    font-size: 1rem;
+  }
+
+  /* Reduce font sizes and paddings for smaller screens but keep them friendly */
+  .action-button {
+    font-size: 1.25rem;
+    padding: 0.75rem 1.5rem;
+  }
+
+  .theme-button {
+    font-size: 1.5rem;
+    padding: 1rem 2rem;
+  }
+
+  .word-button {
+    font-size: 1.25rem;
+    padding: 0.75rem 1.5rem;
+  }
+
+  .sentence-word {
+    font-size: 1.25rem;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Message box size adjustments */
+  .message-box {
+    font-size: 1.25rem;
+    padding: 0.75rem 1.5rem;
+    top: 1.5rem;
+  }
+
+  /* Progress bar height */
+  .progress-bar {
+    height: 10px;
+    border-radius: 5px;
+  }
+
+  /* Emoji size adjusted for small screens */
+  .emoji {
+    font-size: 2.5rem;
+  }
 }
