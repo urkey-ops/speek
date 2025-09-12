@@ -1,121 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  --font-display: 'Comic Neue', cursive;
-  --font-size-base: clamp(1.25rem, 2vw, 1.5rem); /* 20–24px */
-  --font-size-large: clamp(1.5rem, 3vw, 2rem);  /* 24–32px */
-  --font-size-xl: clamp(2rem, 4vw, 2.5rem);     /* 32–40px */
+  --color-primary: #BBDEFB; /* Light Blue */
+  --color-secondary: #D1C4E9; /* Light Purple */
+  --color-accent-green: #A5D6A7;
+  --color-accent-yellow: #FFD740;
+  --color-text-dark: #263238;
+  --color-text-light: #ECEFF1;
+  --font-display: 'Fredoka', cursive;
+  --font-body: 'Balsamiq Sans', cursive;
 }
 
 body {
+  font-family: var(--font-body);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  color: var(--color-text-dark);
+}
+
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
-  background-color: #ffe6f0;
-  background-image: radial-gradient(#fff5f9 1px, transparent 1px),
-                    radial-gradient(#fff5f9 1px, transparent 1px);
-  background-size: 20px 20px;
-  background-position: 0 0, 10px 10px;
 }
 
-.squircle {
-  border-radius: 2rem;
-}
-
-.bg-api {
-  background-color: #e0e7ff;
-  transition: background-color 0.5s ease;
-}
-
-.bg-json {
-  background-color: #fff9e6;
-  transition: background-color 0.5s ease;
-}
-
-/* BUTTON BASE STYLES */
-.base-button,
-.word-button,
-.theme-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  font-weight: bold;
-  font-size: var(--font-size-base);
-  padding: 1rem 1.5rem;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font-display);
-  transition: all 0.2s ease-in-out;
-  min-height: 56px;
-  min-width: 56px;
-}
-
-.base-button:hover,
-.word-button:hover,
-.theme-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.action-button {
-  @apply base-button text-white bg-indigo-500 hover:bg-indigo-600 rounded-full;
-}
-
-.theme-button {
-  @apply base-button bg-indigo-400 text-white shadow-lg rounded-[2.5rem];
-  font-size: var(--font-size-large);
-  padding: 1.5rem 2.5rem;
-}
-
-.word-button {
-  @apply base-button shadow-md rounded-full;
-  font-size: var(--font-size-large);
-  padding: 1.25rem 2rem;
-  color: #fff;
-}
-
-/* Color-coded buttons */
-.word-button.noun-color { background-color: #8cc366; }
-.word-button.verb-color { background-color: #5aa6cc; }
-.word-button.adjective-color { background-color: #e691a0; }
-.word-button.determiner-color { background-color: #e6b800; }
-.word-button.preposition-color { background-color: #a074a0; }
-.word-button.punctuation-color { background-color: #696969; }
-.word-button.other-color { background-color: #b0b0b0; }
-
-/* Sentence words */
-.sentence-word {
-  @apply font-bold px-3 py-2 rounded-full text-white shadow-sm;
-  display: inline-block;
-  font-size: var(--font-size-large);
-}
-
-.sentence-word.noun-color { background-color: #8cc366; }
-.sentence-word.verb-color { background-color: #5aa6cc; }
-.sentence-word.adjective-color { background-color: #e691a0; }
-.sentence-word.determiner-color { background-color: #e6b800; }
-.sentence-word.preposition-color { background-color: #a074a0; }
-.sentence-word.punctuation-color { background-color: #696969; }
-.sentence-word.other-color { background-color: #b0b0b0; }
-
-.placeholder-text {
-  color: #a0a0a0;
-  font-style: italic;
-  font-size: var(--font-size-base);
-}
-
-/* Message Box */
-.message-box {
+/* Background Blobs for a whimsical touch */
+.background-blob {
   position: absolute;
-  top: 1rem;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: -1;
+  animation: float 20s ease-in-out infinite alternate;
+}
+
+.blob-1 {
+  width: 300px; height: 300px;
+  top: 10%; left: -5%;
+  background: rgba(255, 255, 255, 0.4);
+}
+.blob-2 {
+  width: 400px; height: 400px;
+  bottom: 5%; right: -10%;
+  background: rgba(255, 255, 255, 0.2);
+  animation-delay: 2s;
+}
+.blob-3 {
+  width: 200px; height: 200px;
+  top: 30%; right: 10%;
+  background: rgba(255, 255, 255, 0.5);
+  animation-delay: 4s;
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(20px, 20px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Base UI Card Style */
+.ui-card {
+    @apply p-8 md:p-12 bg-white/80 backdrop-blur-md rounded-[3rem] shadow-xl border border-white border-opacity-60 relative;
+    max-width: 90vw;
+    width: 100%;
+}
+
+.theme-selector-card {
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-playground-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem; /* Space between sections */
+    opacity: 0; /* Hidden by default */
+    transform: scale(0.95);
+    pointer-events: none; /* Disable interaction when hidden */
+}
+.app-playground-card.active {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: all; /* Enable interaction when active */
+}
+
+
+/* Message Box - More prominent, bubbly */
+.message-box {
+  position: fixed;
+  top: 1.5rem;
   left: 50%;
-  transform: translateX(-50%) translateY(-150%);
+  transform: translateX(-50%) translateY(-200%); /* Start off-screen */
   padding: 1rem 2rem;
-  border-radius: 9999px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 9999px; /* Pill shape */
+  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
   font-weight: bold;
-  font-size: var(--font-size-base);
-  transition: all 0.5s ease-in-out;
+  font-size: 1.25rem;
+  color: white;
+  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Bounce effect */
   opacity: 0;
   visibility: hidden;
-  z-index: 100;
+  z-index: 1000;
+  border: 2px solid rgba(255,255,255,0.7);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
 .message-box.visible {
@@ -124,38 +114,150 @@ body {
   visibility: visible;
 }
 
-.message-box.bg-success { background-color: #d4edda; color: #155724; }
-.message-box.bg-info { background-color: #cce5ff; color: #004085; }
-.message-box.bg-warning { background-color: #fff3cd; color: #856404; }
-.message-box.bg-danger { background-color: #f8d7da; color: #721c24; }
+.message-box.bg-success { background-color: #4CAF50; } /* Green */
+.message-box.bg-info { background-color: #2196F3; } /* Blue */
+.message-box.bg-warning { background-color: #FFC107; } /* Yellow */
+.message-box.bg-danger { background-color: #F44336; } /* Red */
 
-/* Progress Bar */
-.progress-bar {
-  width: 100%;
-  height: 12px;
-  background-color: #e2e8f0;
-  border-radius: 6px;
-  overflow: hidden;
+
+/* Theme Buttons - Larger, playful bubbles */
+.theme-button {
+  @apply flex flex-col items-center justify-center gap-2
+         px-8 py-6 text-2xl font-display rounded-full shadow-lg
+         bg-gradient-to-br from-purple-400 to-pink-500 text-white
+         hover:from-purple-500 hover:to-pink-600 transition-all duration-300 ease-in-out;
+  min-width: 160px; /* Ensure a decent size */
+  min-height: 160px;
+  border: 4px solid rgba(255,255,255,0.7);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+}
+.theme-button .emoji {
+  font-size: 4rem; /* Larger emoji */
+  line-height: 1;
+}
+.theme-button:hover {
+    transform: scale(1.05) translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.3);
 }
 
+/* Sentence Cloud - Soft, wavy border, larger text */
+.sentence-cloud {
+    @apply w-full min-h-[150px] bg-white/60 rounded-[2.5rem] p-6 md:p-10
+           flex flex-wrap items-center justify-center gap-3 text-3xl md:text-5xl
+           text-[#4DD0E1] border-4 border-dashed border-[#80CBC4] shadow-inner;
+    background-image: linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-position: 0 0;
+}
+.sentence-cloud .placeholder-text {
+    font-style: italic;
+    color: #80CBC4;
+    font-size: 2.5rem;
+}
+
+/* Sentence Words - Bubbly, with pop effect */
+.sentence-word {
+  @apply font-display px-4 py-2 rounded-full text-white shadow-md
+         inline-block text-4xl md:text-5xl relative; /* Relative for animation */
+  animation: wordPop 0.3s ease-out;
+  transition: all 0.2s ease-in-out;
+  border: 2px solid rgba(255,255,255,0.7);
+  transform-origin: bottom center;
+}
+@keyframes wordPop {
+    0% { transform: scale(0); opacity: 0; }
+    80% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+/* Action Bubbles (Undo, Clear, Read, Shuffle) */
+.action-buttons-container {
+    @apply flex flex-wrap justify-center gap-4 mt-4;
+}
+.action-bubble {
+    @apply flex items-center justify-center w-16 h-16 rounded-full text-white text-3xl shadow-lg
+           hover:scale-110 active:scale-95 transition-all duration-200 ease-in-out;
+    border: 3px solid rgba(255,255,255,0.7);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+}
+
+
+/* Word Bubbles - Larger, more vibrant, bouncy appearance */
+.word-bubble-container {
+    @apply w-full flex flex-wrap justify-center gap-3 md:gap-4 mt-6 p-4 bg-white/40 rounded-[2rem] shadow-inner;
+    min-height: 180px;
+    align-items: center;
+}
+
+.word-button {
+  @apply flex items-center justify-center px-6 py-3 text-2xl font-display rounded-full shadow-md
+         text-white hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out;
+  min-width: 100px; /* Ensure good tap target */
+  border: 2px solid rgba(255,255,255,0.7);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  animation: floatSmall 5s ease-in-out infinite alternate;
+}
+@keyframes floatSmall {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+    100% { transform: translateY(0px); }
+}
+.word-button:nth-child(even) { animation-delay: 0.5s; } /* Stagger animation */
+.word-button:nth-child(3n) { animation-delay: 1s; }
+
+
+/* Color-coded buttons and words */
+.noun-color { background-color: #8CC34A; } /* Lime Green */
+.verb-color { background-color: #03A9F4; } /* Light Blue */
+.adjective-color { background-color: #FF7043; } /* Deep Orange */
+.determiner-color { background-color: #FFEB3B; color: #757575; } /* Yellow */
+.preposition-color { background-color: #9C27B0; } /* Deep Purple */
+.punctuation-color { background-color: #607D8B; } /* Blue Grey */
+.other-color { background-color: #BDBDBD; } /* Light Grey */
+
+/* High-Five Button - Big, celebratory checkmark */
+.big-check-button {
+    @apply flex items-center justify-center gap-4 py-5 px-10 mt-6
+           text-3xl font-display text-white rounded-full shadow-xl
+           hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out;
+    border: 4px solid rgba(255,255,255,0.7);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+}
+.big-check-button .fas {
+    font-size: 2.5rem;
+}
+
+/* Progress Meter - Sparkle/Star themed */
+.progress-meter {
+    @apply mt-4 flex flex-col items-center w-full max-w-sm;
+}
+.progress-text {
+    @apply text-xl font-body text-[#4DB6AC] mb-2 drop-shadow-sm;
+}
+.progress-bar-bg {
+    @apply w-full h-10 bg-gradient-to-r from-[#B2EBF2] to-[#E0F7FA] rounded-full overflow-hidden relative;
+    border: 3px solid rgba(255,255,255,0.8);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+}
 .progress-fill {
-  height: 100%;
-  width: 0%;
-  background-color: #6366f1;
-  transition: width 0.3s ease-in-out;
-  border-radius: 6px;
+    @apply h-full w-0% bg-gradient-to-r from-[#00BCD4] to-[#00ACC1] rounded-full
+           transition-all duration-500 ease-in-out relative;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
 }
-
-.fade-in {
-  animation: fadeIn 0.5s ease-in;
+.progress-fill::after { /* Sparkle overlay */
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,0.3) 0px,
+        rgba(255,255,255,0.3) 2px,
+        transparent 2px,
+        transparent 5px
+    );
+    animation: sparkleFlow 10s linear infinite;
 }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Emoji size for theme buttons */
-.emoji {
-  font-size: 2.5rem;
+@keyframes sparkleFlow {
+    from { background-position: 0% 0%; }
+    to { background-position: 100% 100%; }
 }
