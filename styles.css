@@ -1,38 +1,43 @@
 :root {
   --font-display: 'Comic Neue', cursive;
+  --primary-color: #ffb6c1; /* Light pastel pink */
+  --secondary-color: #ffd700; /* Soft yellow */
+  --accent-color: #8ecae6; /* Calm pastel blue */
+  --background-pattern: radial-gradient(circle, #ffd1dc 1px, transparent 1px);
 }
 
-/* Body with a fresh, vibrant background pattern for a playful look */
+/* Body with a fresh, playful gradient background pattern */
 body {
   font-family: var(--font-display);
-  background-color: #ffe4e1; /* Light pastel pink */
+  background-color: #fff0f5; /* Very light pinkish */
   background-image: 
-    radial-gradient(circle at 1px 1px, #ffd1dc 2px, transparent 2px),
-    radial-gradient(circle at 10px 10px, #ffd1dc 2px, transparent 2px);
+    radial-gradient(circle at 1px 1px, #ffe4e1 2px, transparent 2px),
+    radial-gradient(circle at 12px 12px, #ffe4e1 2px, transparent 2px);
   background-size: 20px 20px;
   background-position: 0 0, 10px 10px;
-  font-size: 1.125rem; /* Base font size for better readability */
+  font-size: 1.125rem; /* Slightly enlarged base font for readability */
   margin: 0;
   padding: 0;
+  color: #333;
 }
 
-/* Squircles for buttons and containers with friendly rounded corners */
+/* Friendly rounded shapes for containers */
 .squircle {
   border-radius: 2rem;
 }
 
-/* Backgrounds for different sections with soft colors */
+/* Bright, soft background for specific sections */
 .bg-api {
-  background-color: #d0e0ff; /* Soft blue */
+  background-color: #d0e0ff; /* Cool pastel blue */
   transition: background-color 0.5s ease;
 }
 
 .bg-json {
-  background-color: #f9d0ff; /* Soft purple-pink */
+  background-color: #f9d0ff; /* Light pastel purple-pink */
   transition: background-color 0.5s ease;
 }
 
-/* Base button styles with larger, more approachable padding and font size */
+/* Buttons with big, approachable shapes and vibrant pastel colors */
 .base-button,
 .word-button,
 .theme-button {
@@ -47,25 +52,26 @@ body {
   font-family: var(--font-display);
   min-width: 50px;
   min-height: 50px;
-  border-radius: 1.75rem; /* softer, more inviting shape */
-  padding: 1rem 2rem; /* larger touch target */
+  border-radius: 2rem;
+  padding: 1rem 2rem;
+  font-size: 1.25rem;
 }
 
-/* Action button: large, friendly, vibrant */
+/* Action Button: big, vibrant, friendly */
 .action-button {
-  @apply base-button px-8 py-4 text-xl rounded-full text-white bg-pink-400 hover:bg-pink-500;
+  @apply base-button px-8 py-4 text-xl rounded-full text-white bg-pink-300 hover:bg-pink-400;
   font-size: 1.5rem;
   padding: 1.25rem 2.5rem;
 }
 
-/* Theme button: big and rounded with shadow for depth */
+/* Theme Button: large, rounded, with subtle shadow */
 .theme-button {
-  @apply base-button px-10 py-6 text-2xl rounded-[2.5rem] bg-purple-400 text-white shadow-lg;
+  @apply base-button px-10 py-6 text-2xl rounded-[2.5rem] bg-purple-200 text-white shadow-lg;
   font-size: 1.75rem;
   padding: 1.5rem 3rem;
 }
 
-/* Word buttons with bright, distinct colors for easy recognition */
+/* Word Buttons: colorful and friendly for recognition */
 .word-button {
   @apply base-button px-10 py-6 text-xl rounded-full shadow-md;
   font-size: 1.25rem;
@@ -73,16 +79,16 @@ body {
   color: #fff;
 }
 
-/* Color-coded words for clarity and fun */
-.word-button.noun-color { background-color: #8cc366; }       /* Green for nouns */
-.word-button.verb-color { background-color: #5aa6cc; }       /* Blue for verbs */
-.word-button.adjective-color { background-color: #e691a0; }  /* Pink for adjectives */
-.word-button.determiner-color { background-color: #e6b800; } /* Gold for determiners */
-.word-button.preposition-color { background-color: #a074a0; } /* Purple for prepositions */
-.word-button.punctuation-color { background-color: #696969; }/* Dark gray for punctuation */
-.word-button.other-color { background-color: #b0b0b0; }       /* Neutral gray */
+/* Color-coded words - big and friendly for recognition */
+.word-button.noun-color { background-color: #8ecae6; }
+.word-button.verb-color { background-color: #fdedc1; }
+.word-button.adjective-color { background-color: #f4a261; }
+.word-button.determiner-color { background-color: #f4f1de; }
+.word-button.preposition-color { background-color: #9ae3d4; }
+.word-button.punctuation-color { background-color: #d4a0a7; }
+.word-button.other-color { background-color: #c0c0c0; }
 
-/* Sentence words styled to be big, friendly, and colorful */
+/* Sentence words: large, colorful, friendly shape */
 .sentence-word {
   @apply font-bold px-4 py-2 rounded-full text-white shadow-sm;
   display: inline-block;
@@ -90,23 +96,23 @@ body {
   padding: 0.75rem 1.5rem;
 }
 
-/* Sentence word color classes for clarity and fun */
-.sentence-word.noun-color { background-color: #8cc366; }
-.sentence-word.verb-color { background-color: #5aa6cc; }
-.sentence-word.adjective-color { background-color: #e691a0; }
-.sentence-word.determiner-color { background-color: #e6b800; }
-.sentence-word.preposition-color { background-color: #a074a0; }
-.sentence-word.punctuation-color { background-color: #696969; }
-.sentence-word.other-color { background-color: #b0b0b0; }
+/* Sentence color classes for clarity and fun */
+.sentence-word.noun-color { background-color: #8ecae6; }
+.sentence-word.verb-color { background-color: #fdedc1; }
+.sentence-word.adjective-color { background-color: #f4a261; }
+.sentence-word.determiner-color { background-color: #f4f1de; }
+.sentence-word.preposition-color { background-color: #9ae3d4; }
+.sentence-word.punctuation-color { background-color: #d4a0a7; }
+.sentence-word.other-color { background-color: #c0c0c0; }
 
-/* Placeholder text: clear, friendly, slightly larger for readability */
+/* Placeholder text: friendly and easy to read */
 .placeholder-text {
-  color: #404040; /* Dark enough for visibility on light backgrounds */
+  color: #404040;
   font-style: italic;
   font-size: 1rem;
 }
 
-/* Message box: larger, more friendly appearance, easy to read */
+/* Message Box: large, friendly, centered with soft shadow */
 .message-box {
   position: absolute;
   top: 2rem;
@@ -129,13 +135,13 @@ body {
   visibility: visible;
 }
 
-/* Message background colors for clarity and friendliness */
+/* Different message backgrounds for clarity and positive reinforcement */
 .message-box.bg-success { background-color: #d4edda; color: #155724; }
 .message-box.bg-info { background-color: #cce5ff; color: #004085; }
 .message-box.bg-warning { background-color: #fff3cd; color: #856404; }
 .message-box.bg-danger { background-color: #f8d7da; color: #721c24; }
 
-/* Progress bar: thicker for better touch interaction, with smooth fill */
+/* Progress bar: thick, colorful, easy to tap */
 .progress-bar {
   width: 100%;
   height: 14px;
@@ -148,12 +154,12 @@ body {
 .progress-fill {
   height: 100%;
   width: 0%;
-  background-color: #6366f1;
+  background-color: #6a4c93;
   transition: width 0.3s ease-in-out;
   border-radius: 7px;
 }
 
-/* Fade-in animations for smooth appearance */
+/* Smooth fade-in animation for elements */
 .fade-in {
   animation: fadeIn 0.5s ease-in;
 }
@@ -163,9 +169,9 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Emoji: larger size for visibility and touch friendliness */
+/* Emoji: very large and friendly for kids' attention */
 .emoji {
-  font-size: 3rem; /* Very large for kids' attention and easy tapping */
+  font-size: 3rem;
 }
 
 /* Responsive adjustments for small screens */
@@ -174,7 +180,7 @@ body {
     font-size: 1rem;
   }
 
-  /* Reduce font sizes and paddings for smaller screens but keep them friendly */
+  /* Smaller fonts and paddings, but still friendly */
   .action-button {
     font-size: 1.25rem;
     padding: 0.75rem 1.5rem;
@@ -208,7 +214,7 @@ body {
     border-radius: 5px;
   }
 
-  /* Emoji size adjusted for small screens */
+  /* Emoji size for small screens */
   .emoji {
     font-size: 2.5rem;
   }
