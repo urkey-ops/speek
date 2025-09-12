@@ -121,7 +121,7 @@ class SentenceBuilder {
 
     async init() {
         try {
-            const response = await fetch('https://cdn.jsdelivr.net/gh/google-gemini/apps/sentence-lab/words.json');
+            const response = await fetch('./words.json');
             if (!response.ok) throw new Error('words.json not found');
             this.state.allWordsData = await response.json();
             this._renderThemeSelector();
