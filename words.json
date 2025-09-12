@@ -44,56 +44,11 @@
       "Space": ["bright", "dark", "giant", "shiny", "mysterious"],
       "Food": ["sweet", "salty", "fresh", "delicious", "hot"],
       "School": ["hard", "easy", "long", "short", "fun", "boring"]
-    },
-    "determiner": [
-      {
-        "word": "a",
-        "type": "determiner"
-      },
-      {
-        "word": "the",
-        "type": "determiner"
-      },
-      {
-        "word": "an",
-        "type": "determiner"
-      }
-    ],
-    "preposition": [
-      {
-        "word": "in",
-        "type": "preposition"
-      },
-      {
-        "word": "on",
-        "type": "preposition"
-      },
-      {
-        "word": "under",
-        "type": "preposition"
-      },
-      {
-        "word": "with",
-        "type": "preposition"
-      },
-      {
-        "word": "near",
-        "type": "preposition"
-      }
-    ],
-    "punctuation": [
-      {
-        "word": ".",
-        "type": "punctuation"
-      },
-      {
-        "word": "!",
-        "type": "punctuation"
-      },
-      {
-        "word": "?",
-        "type": "punctuation"
-      }
-    ]
+    }
+  },
+  "miscWords": {
+    "determiner": ["a", "the", "an"],
+    "preposition": ["in", "on", "under", "with", "near"],
+    "punctuation": [".", "!", "?"]
   }
 }
