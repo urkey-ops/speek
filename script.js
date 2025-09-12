@@ -6,16 +6,6 @@
 // In a real application, a backend server should handle API keys.
 // For this demonstration, you can put your key here.
 // -------------------------------------------------------------
-// const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
-
-// This is the main application file for the Sentence Lab.
-// This version is designed to connect to the Gemini API.
-
-// -------------------------------------------------------------
-// SECURE API KEY HANDLING
-// In a real application, a backend server should handle API keys.
-// For this demonstration, you can put your key here.
-// -------------------------------------------------------------
 const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
 
 const apiCache = new Map();
