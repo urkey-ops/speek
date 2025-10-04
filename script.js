@@ -1,6 +1,6 @@
 // This is the main application file for the Sentence Lab.
-// This version (v4.2) fixes critical API payload and model name errors (400/404)
-// while retaining all previous features (JSON mode, Tap-to-Edit, graceful failure).
+// This version (v4.3) includes the final fix for the API JSON payload error,
+// changing 'config' to 'generationConfig' in the request body.
 
 // -------------------------------------------------------------
 // SECURE API KEY HANDLING
@@ -16,10 +16,9 @@ const apiCache = new Map();
 // Helper function to create a delay, used for sequencing UI messages.
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// UPGRADED & FIXED: callGeminiAPI now uses the correct model name (gemini-2.5-flash)
-// and structures the JSON request body correctly to enable JSON mode.
+// FIXED: callGeminiAPI now uses the correct model name and the correct field 
+// for JSON response configuration ('generationConfig').
 const callGeminiAPI = async (prompt, jsonMode = false) => {
-    // FIX 1: Updated model name from gemini-1.5-flash to gemini-2.5-flash
     const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
     const cacheKey = prompt + (jsonMode ? 'JSON' : 'TEXT');
 
@@ -33,12 +32,11 @@ const callGeminiAPI = async (prompt, jsonMode = false) => {
         apiCache.delete(oldestKey);
     }
     
-    // FIX 2: Restructure the request body to correctly separate 'contents' and 'config'.
+    // CRITICAL FIX: Use 'generationConfig' for response configuration
     const requestBody = {
         contents: [{ parts: [{ text: prompt }] }],
-        // The 'config' property must be at the top-level of the request body
         ...(jsonMode && {
-            config: {
+            generationConfig: {
                 responseMimeType: "application/json",
             }
         })
@@ -48,7 +46,7 @@ const callGeminiAPI = async (prompt, jsonMode = false) => {
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody) // Use the correctly structured requestBody
+            body: JSON.stringify(requestBody) 
         });
 
         if (!response.ok) {
