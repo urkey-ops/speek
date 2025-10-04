@@ -7,22 +7,14 @@
 // only be used for local testing. For production, move this to a backend server.
 // -------------------------------------------------------------
 const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
-const MAX_CACHE_SIZE = 50; // **FIX:** Added cache size limit
+const MAX_CACHE_SIZE = 50;
 const apiCache = new Map();
 
-// Helper function to find the text content in the API response.
-function findTextInResponse(obj) {
-    if (typeof obj === 'string') return obj;
-    if (typeof obj === 'object' && obj !== null) {
-        for (const key in obj) {
-            const result = findTextInResponse(obj[key]);
-            if (result) return result;
-        }
-    }
-    return null;
-}
+// Helper function to create a delay, used for sequencing UI messages.
+const delay = ms => new Promise(res => setTimeout(res, ms));
 
 // Helper function to make the API call with caching.
+// **REFACTORED:** Now directly parses the response and returns only the text content.
 const callGeminiAPI = async (prompt) => {
     const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
     const cacheKey = prompt;
@@ -31,7 +23,7 @@ const callGeminiAPI = async (prompt) => {
         return apiCache.get(cacheKey);
     }
 
-    // **FIX:** Implement cache eviction policy (FIFO)
+    // Implement cache eviction policy (FIFO)
     if (apiCache.size >= MAX_CACHE_SIZE) {
         const oldestKey = apiCache.keys().next().value;
         apiCache.delete(oldestKey);
@@ -50,8 +42,15 @@ const callGeminiAPI = async (prompt) => {
         }
 
         const data = await response.json();
-        apiCache.set(cacheKey, data);
-        return data;
+        // **FIX:** Directly and safely access the expected text, making this far more robust.
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!text) {
+            throw new Error("Could not find text in API response.");
+        }
+
+        apiCache.set(cacheKey, text);
+        return text;
     } catch (error) {
         console.error('API call failed:', error);
         throw error;
@@ -78,7 +77,6 @@ const LEARNING_LEVELS = {
 };
 
 class SentenceBuilder {
-    // **FIX:** Defined constants for durations to avoid "magic numbers"
     static DURATION = {
         INFO: 6000,
         SUCCESS: 3000,
@@ -114,7 +112,6 @@ class SentenceBuilder {
     }
 
     _getElements() {
-        // ... (no changes in this method)
         this.elements = {
             themeSelector: document.getElementById('themeSelector'),
             themeButtonsContainer: document.getElementById('themeButtonsContainer'),
@@ -133,7 +130,6 @@ class SentenceBuilder {
     }
 
     _setupEventListeners() {
-        // ... (no changes in this method)
         this.elements.wordBankContainer.addEventListener('click', (e) => {
             if (e.target.matches('.word-button')) this._handleWordClick(e.target);
         });
@@ -145,7 +141,6 @@ class SentenceBuilder {
     }
 
     _renderThemeSelector() {
-        // ... (no changes in this method)
         this.state.allWordsData.themes.forEach(theme => {
             const button = document.createElement('button');
             button.className = 'theme-button squircle';
@@ -170,32 +165,26 @@ class SentenceBuilder {
         this._updateInstructionText();
     }
 
-    _levelUp() {
+    async _levelUp() {
         if (LEARNING_LEVELS[this.state.currentLevel + 1]) {
             this.state.currentLevel++;
             this._showMessage('🎉 LEVEL UP! 🎉', 'bg-success', SentenceBuilder.DURATION.SUCCESS);
-            setTimeout(() => this._startLevel(), SentenceBuilder.DURATION.SUCCESS);
+            await delay(SentenceBuilder.DURATION.SUCCESS);
+            this._startLevel();
         } else {
-            this._showMessage('Wow! You are a sentence master! 🏆', 'bg-success', SentenceBuilder.DURATION.SUCCESS);
+            this._showMessage('Wow! You are a sentence master! 🏆', 'bg-success', SentenceBuilder.DURATION.INFO);
         }
     }
-    
-    // **FIX:** Moved `getAIWords` inside the class to correctly access `this.state`.
-    // Renamed to `_getAIWords` to follow the private method convention.
+
     async _getAIWords(sentence, nextPartType, theme) {
         const prompt = `You are a helpful language model assistant for a first grader. Given the partial sentence "${sentence}", please suggest a list of 5-7 simple words that a 6-year-old would know. The next word should be a "${nextPartType}". If there is a theme, like "${theme}", try to suggest words related to it. Respond with ONLY a comma-separated list of lowercase words, like "word1, word2, word3".`;
         try {
-            const response = await callGeminiAPI(prompt);
-            const text = findTextInResponse(response);
-            if (text) {
-                // **FIX:** Replaced fragile validation with a more robust RegEx check.
-                const isValidResponse = /^[a-z,\s]+$/i.test(text.trim());
-                if (isValidResponse) {
-                    return text.split(',').map(word => ({ word: word.trim(), type: nextPartType, theme: theme }));
-                }
+            const text = await callGeminiAPI(prompt);
+            const isValidResponse = /^[a-z,\s]+$/i.test(text.trim());
+            if (isValidResponse) {
+                return text.split(',').map(word => ({ word: word.trim(), type: nextPartType, theme: theme }));
             }
-            // If response is invalid or empty, we fall through to the fallback.
-            throw new Error("Invalid AI response format"); 
+            throw new Error("Invalid AI response format (did not match RegEx).");
         } catch (error) {
             console.error('Failed to get AI words, using fallback:', error);
             // Fallback logic for when the API fails or returns bad data.
@@ -226,9 +215,9 @@ class SentenceBuilder {
             this._renderWordBank();
             return;
         }
-        
+
         this._showMessage('Thinking...', 'bg-info', SentenceBuilder.DURATION.THINKING);
-        this.elements.wordBankContainer.classList.add('loading'); // **FIX:** Added loading state
+        this.elements.wordBankContainer.classList.add('loading');
         this.elements.shuffleWordsBtn.disabled = true;
 
         const currentSentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
@@ -238,11 +227,10 @@ class SentenceBuilder {
         } else {
             words = await this._getAIWords(currentSentence, nextPart, this.state.currentTheme);
         }
-        
-        // **FIX:** Sort words once here, not on every render.
+
         this.state.wordBank = words.sort((a, b) => a.word.localeCompare(b.word));
-        
-        this.elements.wordBankContainer.classList.remove('loading'); // **FIX:** Removed loading state
+
+        this.elements.wordBankContainer.classList.remove('loading');
         this.elements.shuffleWordsBtn.disabled = false;
         this._renderWordBank();
     }
@@ -256,8 +244,7 @@ class SentenceBuilder {
             this._hideMessage();
             return;
         }
-        
-        // **FIX:** No longer sorts here, uses pre-sorted list.
+
         this.state.wordBank.forEach(wordObj => {
             const button = document.createElement('button');
             button.textContent = wordObj.word;
@@ -280,7 +267,6 @@ class SentenceBuilder {
     }
 
     _renderSentence() {
-        // ... (no changes in this method, incremental update is overly complex for this use case)
         this.elements.sentenceDisplay.innerHTML = '';
         const colorMap = this.state.allWordsData.typeColors;
         if (this.state.sentenceWordsArray.length === 0) {
@@ -316,7 +302,6 @@ class SentenceBuilder {
 
     _readSentenceAloud() {
         const sentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
-        // **FIX:** Added feature detection for speech synthesis
         if ('speechSynthesis' in window && sentence.length > 0) {
             speechSynthesis.speak(new SpeechSynthesisUtterance(sentence));
         } else if (sentence.length > 0) {
@@ -337,49 +322,41 @@ class SentenceBuilder {
 
         try {
             this._showMessage("Checking...", 'bg-info', SentenceBuilder.DURATION.THINKING);
-            const response = await callGeminiAPI(prompt);
-            const feedback = findTextInResponse(response).trim();
-            
-            if (feedback.toLowerCase().includes("valid")) {
-                this._handleValidSentence();
+            const feedback = await callGeminiAPI(prompt);
+
+            // **FIX:** More robust check for the AI's response.
+            if (feedback.trim().toLowerCase().includes("valid")) {
+                await this._handleValidSentence();
             } else {
                 const hintPrompt = `You are a friendly teacher for a 6-year-old. The child wrote this sentence: "${sentenceText}". Give one very simple, encouraging hint for a first grader to fix it.`;
-                const hintResponse = await callGeminiAPI(hintPrompt);
-                const hint = findTextInResponse(hintResponse).trim();
+                const hint = await callGeminiAPI(hintPrompt);
                 this._showMessage(hint, 'bg-info', SentenceBuilder.DURATION.INFO);
             }
         } catch (error) {
-            // **FIX:** Corrected error handling. Do not validate sentence as correct on API failure.
-            // Instead, inform the user and encourage them to build a new sentence.
-            this._showMessage('Hmm, I can’t check that sentence right now. Let’s try a new one! 👍', 'bg-warning', SentenceBuilder.DURATION.WARNING);
-            setTimeout(() => {
-                this._clearSentence(); // Start a new sentence instead of rewarding a potentially wrong one.
-            }, SentenceBuilder.DURATION.WARNING);
+            // **FIX:** On API failure, don't clear the sentence. Let the user try again.
+            this._showMessage('Hmm, I can’t check that sentence right now. Please try again! 👍', 'bg-warning', SentenceBuilder.DURATION.WARNING);
         } finally {
-            // Re-enable button unless a new sentence has already started
-            if (this.state.sentenceWordsArray.length > 0) {
-                 this.elements.highFiveBtn.disabled = false;
-                 this._renderHighFiveButton();
-            }
+            // Re-enable the button if the sentence is still present and complete
+            this._renderHighFiveButton();
         }
     }
 
-    _handleValidSentence() {
+    // **REFACTORED:** Replaced nested setTimeouts with async/await for clarity.
+    async _handleValidSentence() {
         this._showMessage('Awesome! Great sentence! 🎉', 'bg-success', SentenceBuilder.DURATION.SUCCESS);
         this.state.sentencesCompletedAtLevel++;
 
-        setTimeout(() => {
-            this._showMessage('Ready for a new one? Let\'s go!', 'bg-info', SentenceBuilder.DURATION.INFO);
-            setTimeout(() => {
-                const level = LEARNING_LEVELS[this.state.currentLevel];
-                if (this.state.sentencesCompletedAtLevel >= level.threshold) {
-                    this._levelUp();
-                } else {
-                    this._clearSentence();
-                    this._updateInstructionText();
-                }
-            }, 2000); // Using a hardcoded value here is okay for UX pacing
-        }, 2000);
+        await delay(2000);
+        this._showMessage('Ready for a new one? Let\'s go!', 'bg-info', SentenceBuilder.DURATION.INFO);
+
+        await delay(2000);
+        const level = LEARNING_LEVELS[this.state.currentLevel];
+        if (this.state.sentencesCompletedAtLevel >= level.threshold) {
+            await this._levelUp();
+        } else {
+            this._clearSentence();
+            this._updateInstructionText();
+        }
     }
 
     _updateInstructionText() {
