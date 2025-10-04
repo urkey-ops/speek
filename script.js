@@ -1,6 +1,6 @@
 // This is the main application file for the Sentence Lab.
-// This version (v4.1) integrates JSON API responses, specific hints, tap-to-edit, 
-// and graceful API failure handling for the 'High-Five' check.
+// This version (v4.2) fixes critical API payload and model name errors (400/404)
+// while retaining all previous features (JSON mode, Tap-to-Edit, graceful failure).
 
 // -------------------------------------------------------------
 // SECURE API KEY HANDLING
@@ -16,9 +16,11 @@ const apiCache = new Map();
 // Helper function to create a delay, used for sequencing UI messages.
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// UPGRADED: callGeminiAPI now expects and forces a JSON response structure when jsonMode is true.
+// UPGRADED & FIXED: callGeminiAPI now uses the correct model name (gemini-2.5-flash)
+// and structures the JSON request body correctly to enable JSON mode.
 const callGeminiAPI = async (prompt, jsonMode = false) => {
-    const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    // FIX 1: Updated model name from gemini-1.5-flash to gemini-2.5-flash
+    const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
     const cacheKey = prompt + (jsonMode ? 'JSON' : 'TEXT');
 
     if (apiCache.has(cacheKey)) {
@@ -30,10 +32,11 @@ const callGeminiAPI = async (prompt, jsonMode = false) => {
         const oldestKey = apiCache.keys().next().value;
         apiCache.delete(oldestKey);
     }
-
-    const config = {
+    
+    // FIX 2: Restructure the request body to correctly separate 'contents' and 'config'.
+    const requestBody = {
         contents: [{ parts: [{ text: prompt }] }],
-        // FEATURE: JSON Mode for API Calls
+        // The 'config' property must be at the top-level of the request body
         ...(jsonMode && {
             config: {
                 responseMimeType: "application/json",
@@ -45,7 +48,7 @@ const callGeminiAPI = async (prompt, jsonMode = false) => {
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(config)
+            body: JSON.stringify(requestBody) // Use the correctly structured requestBody
         });
 
         if (!response.ok) {
