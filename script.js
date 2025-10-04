@@ -1,6 +1,7 @@
 // This is the main application file for the Sentence Lab.
-// This version (v4.3) includes the final fix for the API JSON payload error,
-// changing 'config' to 'generationConfig' in the request body.
+// This version (v4.4) applies a more robust fix to the API JSON payload error,
+// using a conditional 'if' block instead of the spread operator to ensure 
+// 'generationConfig' is only present when jsonMode is true.
 
 // -------------------------------------------------------------
 // SECURE API KEY HANDLING
@@ -16,8 +17,7 @@ const apiCache = new Map();
 // Helper function to create a delay, used for sequencing UI messages.
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// FIXED: callGeminiAPI now uses the correct model name and the correct field 
-// for JSON response configuration ('generationConfig').
+// FIXED: callGeminiAPI now uses robust conditional logic to construct the request body.
 const callGeminiAPI = async (prompt, jsonMode = false) => {
     const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
     const cacheKey = prompt + (jsonMode ? 'JSON' : 'TEXT');
@@ -32,15 +32,18 @@ const callGeminiAPI = async (prompt, jsonMode = false) => {
         apiCache.delete(oldestKey);
     }
     
-    // CRITICAL FIX: Use 'generationConfig' for response configuration
+    // CRITICAL FIX: Construct the base request body
     const requestBody = {
         contents: [{ parts: [{ text: prompt }] }],
-        ...(jsonMode && {
-            generationConfig: {
-                responseMimeType: "application/json",
-            }
-        })
     };
+
+    // CRITICAL FIX: Conditionally add generationConfig only when jsonMode is true.
+    // This prevents the persistent 400 error.
+    if (jsonMode) {
+        requestBody.generationConfig = {
+            responseMimeType: "application/json",
+        };
+    }
 
     try {
         const response = await fetch(API_ENDPOINT, {
