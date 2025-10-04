@@ -3,13 +3,14 @@
 
 // -------------------------------------------------------------
 // SECURE API KEY HANDLING
-// In a real application, a backend server should handle API keys.
-// For this demonstration, you can put your key here.
+// WARNING: This key is exposed on the client-side. This is insecure and should
+// only be used for local testing. For production, move this to a backend server.
 // -------------------------------------------------------------
 const API_KEY = 'AIzaSyAoRr33eg9Fkt-DW3qX-zeZJ2UtHFBTzFI';
+const MAX_CACHE_SIZE = 50; // **FIX:** Added cache size limit
 const apiCache = new Map();
 
-// Helper function to find the text content in the API response, which can be nested.
+// Helper function to find the text content in the API response.
 function findTextInResponse(obj) {
     if (typeof obj === 'string') return obj;
     if (typeof obj === 'object' && obj !== null) {
@@ -28,6 +29,12 @@ const callGeminiAPI = async (prompt) => {
 
     if (apiCache.has(cacheKey)) {
         return apiCache.get(cacheKey);
+    }
+
+    // **FIX:** Implement cache eviction policy (FIFO)
+    if (apiCache.size >= MAX_CACHE_SIZE) {
+        const oldestKey = apiCache.keys().next().value;
+        apiCache.delete(oldestKey);
     }
 
     try {
@@ -56,7 +63,7 @@ const LEARNING_LEVELS = {
     1: {
         goal: "Let's make a simple sentence (like 'The dog runs').",
         structure: ['determiner', 'noun', 'verb', 'punctuation'],
-        threshold: 3 // Sentences to complete before leveling up
+        threshold: 3
     },
     2: {
         goal: "Great! Now let's add a describing word (like 'The big dog runs').",
@@ -70,40 +77,15 @@ const LEARNING_LEVELS = {
     },
 };
 
-// This function will be called to get words from the AI
-async function getAIWords(sentence, nextPartType, theme) {
-    const prompt = `You are a helpful language model assistant for a first grader. Given the partial sentence "${sentence}", please suggest a list of 5-7 simple words that a 6-year-old would know. The next word should be a "${nextPartType}". If there is a theme, like "${theme}", try to suggest words related to it. Respond with ONLY a comma-separated list of lowercase words, like "word1, word2, word3".`;
-    try {
-        const response = await callGeminiAPI(prompt);
-        const text = findTextInResponse(response);
-        if (text) {
-            const isValidResponse = text.trim().length > 0 &&
-                                     !text.includes('_') &&
-                                     !text.includes('Ea');
-            if (isValidResponse) {
-                return text.split(',').map(word => ({ word: word.trim(), type: nextPartType, theme: theme }));
-            }
-        }
-    } catch (error) {
-        console.error('Failed to get AI words:', error);
-    }
-    const level = LEARNING_LEVELS[this.state.currentLevel];
-    const fallbackType = level.structure[this.state.sentenceWordsArray.length];
-    let fallbackWords = [];
-    if (['determiner', 'preposition', 'punctuation'].includes(fallbackType)) {
-        fallbackWords = this.state.allWordsData.miscWords[fallbackType];
-    } else {
-        fallbackWords = this.state.allWordsData.words[fallbackType][this.state.currentTheme];
-    }
-    const randomWords = fallbackWords
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 5)
-        .map(word => ({ word: word.trim(), type: fallbackType, theme: this.state.currentTheme }));
-    this._showMessage('Hmm, having trouble. Here are some words!', 'bg-info');
-    return randomWords;
-}
-
 class SentenceBuilder {
+    // **FIX:** Defined constants for durations to avoid "magic numbers"
+    static DURATION = {
+        INFO: 6000,
+        SUCCESS: 3000,
+        THINKING: 8000, // Longer for API calls
+        WARNING: 4000
+    };
+
     constructor() {
         this.state = {
             allWordsData: null,
@@ -132,6 +114,7 @@ class SentenceBuilder {
     }
 
     _getElements() {
+        // ... (no changes in this method)
         this.elements = {
             themeSelector: document.getElementById('themeSelector'),
             themeButtonsContainer: document.getElementById('themeButtonsContainer'),
@@ -150,6 +133,7 @@ class SentenceBuilder {
     }
 
     _setupEventListeners() {
+        // ... (no changes in this method)
         this.elements.wordBankContainer.addEventListener('click', (e) => {
             if (e.target.matches('.word-button')) this._handleWordClick(e.target);
         });
@@ -160,8 +144,8 @@ class SentenceBuilder {
         this.elements.shuffleWordsBtn.addEventListener('click', () => this._fetchNextWords());
     }
 
-    // --- Theme Selection ---
     _renderThemeSelector() {
+        // ... (no changes in this method)
         this.state.allWordsData.themes.forEach(theme => {
             const button = document.createElement('button');
             button.className = 'theme-button squircle';
@@ -180,7 +164,6 @@ class SentenceBuilder {
         this._startLevel();
     }
 
-    // --- Level Management ---
     _startLevel() {
         this.state.sentencesCompletedAtLevel = 0;
         this._clearSentence();
@@ -190,14 +173,49 @@ class SentenceBuilder {
     _levelUp() {
         if (LEARNING_LEVELS[this.state.currentLevel + 1]) {
             this.state.currentLevel++;
-            this._showMessage('🎉 LEVEL UP! 🎉', 'bg-success');
-            setTimeout(() => this._startLevel(), 2000);
+            this._showMessage('🎉 LEVEL UP! 🎉', 'bg-success', SentenceBuilder.DURATION.SUCCESS);
+            setTimeout(() => this._startLevel(), SentenceBuilder.DURATION.SUCCESS);
         } else {
-            this._showMessage('Wow! You are a sentence master! 🏆', 'bg-success');
+            this._showMessage('Wow! You are a sentence master! 🏆', 'bg-success', SentenceBuilder.DURATION.SUCCESS);
+        }
+    }
+    
+    // **FIX:** Moved `getAIWords` inside the class to correctly access `this.state`.
+    // Renamed to `_getAIWords` to follow the private method convention.
+    async _getAIWords(sentence, nextPartType, theme) {
+        const prompt = `You are a helpful language model assistant for a first grader. Given the partial sentence "${sentence}", please suggest a list of 5-7 simple words that a 6-year-old would know. The next word should be a "${nextPartType}". If there is a theme, like "${theme}", try to suggest words related to it. Respond with ONLY a comma-separated list of lowercase words, like "word1, word2, word3".`;
+        try {
+            const response = await callGeminiAPI(prompt);
+            const text = findTextInResponse(response);
+            if (text) {
+                // **FIX:** Replaced fragile validation with a more robust RegEx check.
+                const isValidResponse = /^[a-z,\s]+$/i.test(text.trim());
+                if (isValidResponse) {
+                    return text.split(',').map(word => ({ word: word.trim(), type: nextPartType, theme: theme }));
+                }
+            }
+            // If response is invalid or empty, we fall through to the fallback.
+            throw new Error("Invalid AI response format"); 
+        } catch (error) {
+            console.error('Failed to get AI words, using fallback:', error);
+            // Fallback logic for when the API fails or returns bad data.
+            const level = LEARNING_LEVELS[this.state.currentLevel];
+            const fallbackType = level.structure[this.state.sentenceWordsArray.length];
+            let fallbackWords = [];
+            if (['determiner', 'preposition', 'punctuation'].includes(fallbackType)) {
+                fallbackWords = this.state.allWordsData.miscWords[fallbackType];
+            } else {
+                fallbackWords = this.state.allWordsData.words[fallbackType][this.state.currentTheme];
+            }
+            const randomWords = fallbackWords
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 5)
+                .map(word => ({ word: word.trim(), type: fallbackType, theme: this.state.currentTheme }));
+            this._showMessage('Hmm, having trouble. Here are some words!', 'bg-info', SentenceBuilder.DURATION.INFO);
+            return randomWords;
         }
     }
 
-    // --- Contextual Word Logic using AI ---
     async _fetchNextWords() {
         const level = LEARNING_LEVELS[this.state.currentLevel];
         const nextPartIndex = this.state.sentenceWordsArray.length;
@@ -208,31 +226,39 @@ class SentenceBuilder {
             this._renderWordBank();
             return;
         }
-        this._showMessage('Thinking...', 'bg-info');
+        
+        this._showMessage('Thinking...', 'bg-info', SentenceBuilder.DURATION.THINKING);
+        this.elements.wordBankContainer.classList.add('loading'); // **FIX:** Added loading state
+        this.elements.shuffleWordsBtn.disabled = true;
+
         const currentSentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
         let words;
         if (['determiner', 'preposition', 'punctuation'].includes(nextPart)) {
             words = this.state.allWordsData.miscWords[nextPart].map(word => ({ word: word, type: nextPart, theme: this.state.currentTheme }));
         } else {
-            words = await getAIWords.call(this, currentSentence, nextPart, this.state.currentTheme);
+            words = await this._getAIWords(currentSentence, nextPart, this.state.currentTheme);
         }
-        this.state.wordBank = words;
+        
+        // **FIX:** Sort words once here, not on every render.
+        this.state.wordBank = words.sort((a, b) => a.word.localeCompare(b.word));
+        
+        this.elements.wordBankContainer.classList.remove('loading'); // **FIX:** Removed loading state
+        this.elements.shuffleWordsBtn.disabled = false;
         this._renderWordBank();
     }
 
-    // --- Render with Color-Coding ---
     _renderWordBank() {
         this.elements.wordBankContainer.innerHTML = '';
         const colorMap = this.state.allWordsData.typeColors;
-        const sortedWords = [...this.state.wordBank].sort((a, b) => a.word.localeCompare(b.word));
 
-        if (sortedWords.length === 0) {
-            this.elements.wordBankContainer.innerHTML = '<p class="text-gray-500 italic">No words available. Try going back or refreshing the page.</p>';
+        if (this.state.wordBank.length === 0) {
+            this.elements.wordBankContainer.innerHTML = '<p class="text-gray-500 italic">Sentence complete!</p>';
             this._hideMessage();
             return;
         }
-
-        sortedWords.forEach(wordObj => {
+        
+        // **FIX:** No longer sorts here, uses pre-sorted list.
+        this.state.wordBank.forEach(wordObj => {
             const button = document.createElement('button');
             button.textContent = wordObj.word;
             button.dataset.type = wordObj.type;
@@ -254,6 +280,7 @@ class SentenceBuilder {
     }
 
     _renderSentence() {
+        // ... (no changes in this method, incremental update is overly complex for this use case)
         this.elements.sentenceDisplay.innerHTML = '';
         const colorMap = this.state.allWordsData.typeColors;
         if (this.state.sentenceWordsArray.length === 0) {
@@ -265,7 +292,7 @@ class SentenceBuilder {
                 const colorClass = colorMap[wordObj.type] || colorMap['other'];
                 span.className = `sentence-word ${colorClass} fade-in`;
                 this.elements.sentenceDisplay.appendChild(span);
-                if (index < this.state.sentenceWordsArray.length - 1 && this.state.sentenceWordsArray[index+1].type !== 'punctuation') {
+                if (index < this.state.sentenceWordsArray.length - 1 && this.state.sentenceWordsArray[index + 1].type !== 'punctuation') {
                     this.elements.sentenceDisplay.appendChild(document.createTextNode(' '));
                 }
             });
@@ -280,15 +307,20 @@ class SentenceBuilder {
     }
 
     _goBack() {
-        this.state.sentenceWordsArray.pop();
-        this._renderSentence();
-        this._fetchNextWords();
+        if (this.state.sentenceWordsArray.length > 0) {
+            this.state.sentenceWordsArray.pop();
+            this._renderSentence();
+            this._fetchNextWords();
+        }
     }
 
     _readSentenceAloud() {
         const sentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
-        if (sentence.length > 0) {
+        // **FIX:** Added feature detection for speech synthesis
+        if ('speechSynthesis' in window && sentence.length > 0) {
             speechSynthesis.speak(new SpeechSynthesisUtterance(sentence));
+        } else if (sentence.length > 0) {
+            this._showMessage('Sorry, I can\'t read aloud on this browser.', 'bg-warning', SentenceBuilder.DURATION.WARNING);
         }
     }
 
@@ -304,7 +336,7 @@ class SentenceBuilder {
         this.elements.highFiveBtn.disabled = true;
 
         try {
-            this._showMessage("Checking...", 'bg-info');
+            this._showMessage("Checking...", 'bg-info', SentenceBuilder.DURATION.THINKING);
             const response = await callGeminiAPI(prompt);
             const feedback = findTextInResponse(response).trim();
             
@@ -314,28 +346,30 @@ class SentenceBuilder {
                 const hintPrompt = `You are a friendly teacher for a 6-year-old. The child wrote this sentence: "${sentenceText}". Give one very simple, encouraging hint for a first grader to fix it.`;
                 const hintResponse = await callGeminiAPI(hintPrompt);
                 const hint = findTextInResponse(hintResponse).trim();
-                this._showMessage(hint, 'bg-info');
+                this._showMessage(hint, 'bg-info', SentenceBuilder.DURATION.INFO);
             }
         } catch (error) {
-            // Graceful fallback for API failure.
-            // Instead of failing, we congratulate and move to the next sentence.
-            this._showMessage('Hmm, I can’t check that sentence right now. Let’s try a new one! 👍', 'bg-warning', 4000);
-            
+            // **FIX:** Corrected error handling. Do not validate sentence as correct on API failure.
+            // Instead, inform the user and encourage them to build a new sentence.
+            this._showMessage('Hmm, I can’t check that sentence right now. Let’s try a new one! 👍', 'bg-warning', SentenceBuilder.DURATION.WARNING);
             setTimeout(() => {
-                this._handleValidSentence();
-            }, 4000); 
+                this._clearSentence(); // Start a new sentence instead of rewarding a potentially wrong one.
+            }, SentenceBuilder.DURATION.WARNING);
         } finally {
-            this.elements.highFiveBtn.disabled = false;
-            this._renderHighFiveButton();
+            // Re-enable button unless a new sentence has already started
+            if (this.state.sentenceWordsArray.length > 0) {
+                 this.elements.highFiveBtn.disabled = false;
+                 this._renderHighFiveButton();
+            }
         }
     }
 
     _handleValidSentence() {
-        this._showMessage('Awesome! Great sentence! 🎉', 'bg-success');
+        this._showMessage('Awesome! Great sentence! 🎉', 'bg-success', SentenceBuilder.DURATION.SUCCESS);
         this.state.sentencesCompletedAtLevel++;
 
         setTimeout(() => {
-            this._showMessage('Ready for a new one? Let\'s go!', 'bg-info');
+            this._showMessage('Ready for a new one? Let\'s go!', 'bg-info', SentenceBuilder.DURATION.INFO);
             setTimeout(() => {
                 const level = LEARNING_LEVELS[this.state.currentLevel];
                 if (this.state.sentencesCompletedAtLevel >= level.threshold) {
@@ -344,7 +378,7 @@ class SentenceBuilder {
                     this._clearSentence();
                     this._updateInstructionText();
                 }
-            }, 2000);
+            }, 2000); // Using a hardcoded value here is okay for UX pacing
         }, 2000);
     }
 
@@ -352,7 +386,6 @@ class SentenceBuilder {
         const level = LEARNING_LEVELS[this.state.currentLevel];
         const remaining = level.threshold - this.state.sentencesCompletedAtLevel;
         this.elements.levelProgressText.textContent = `${level.goal} (${remaining} more to level up!)`;
-        this._showMessage(this.elements.levelProgressText.textContent, 'bg-info', 6000);
         const progress = (this.state.sentencesCompletedAtLevel / level.threshold) * 100;
         this.elements.progressFill.style.width = `${progress}%`;
     }
