@@ -1,5 +1,6 @@
 // This is the main application file for the Sentence Lab.
-// This version (v4) integrates JSON API responses, specific hints, and tap-to-edit.
+// This version (v4.1) integrates JSON API responses, specific hints, tap-to-edit, 
+// and graceful API failure handling for the 'High-Five' check.
 
 // -------------------------------------------------------------
 // SECURE API KEY HANDLING
@@ -15,8 +16,7 @@ const apiCache = new Map();
 // Helper function to create a delay, used for sequencing UI messages.
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// **UPGRADED:** callGeminiAPI now expects and forces a JSON response structure.
-// It also has an optional 'jsonMode' flag which should be true for structured data.
+// UPGRADED: callGeminiAPI now expects and forces a JSON response structure when jsonMode is true.
 const callGeminiAPI = async (prompt, jsonMode = false) => {
     const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
     const cacheKey = prompt + (jsonMode ? 'JSON' : 'TEXT');
@@ -33,7 +33,7 @@ const callGeminiAPI = async (prompt, jsonMode = false) => {
 
     const config = {
         contents: [{ parts: [{ text: prompt }] }],
-        // **FEATURE: JSON Mode for API Calls**
+        // FEATURE: JSON Mode for API Calls
         ...(jsonMode && {
             config: {
                 responseMimeType: "application/json",
@@ -78,7 +78,7 @@ const callGeminiAPI = async (prompt, jsonMode = false) => {
     }
 };
 
-// Scaffolding Levels Definition (Remains the same)
+// Scaffolding Levels Definition
 const LEARNING_LEVELS = {
     1: {
         goal: "Let's make a simple sentence (like 'The dog runs').",
@@ -160,13 +160,13 @@ class SentenceBuilder {
         this.elements.highFiveBtn.addEventListener('click', () => this._handleHighFiveClick());
         this.elements.shuffleWordsBtn.addEventListener('click', () => this._fetchNextWords());
         
-        // **FEATURE: Tap to Edit**
+        // FEATURE: Tap to Edit
         this.elements.sentenceDisplay.addEventListener('click', (e) => {
             if (e.target.matches('.sentence-word')) this._handleSentenceWordTap(e.target);
         });
     }
     
-    // **NEW METHOD: Tap to Edit Logic**
+    // NEW METHOD: Tap to Edit Logic
     _handleSentenceWordTap(wordElement) {
         const wordIndex = parseInt(wordElement.dataset.index);
         
@@ -214,7 +214,7 @@ class SentenceBuilder {
     }
 
     async _getAIWords(sentence, nextPartType, theme, existingWords) {
-        // **FEATURE: JSON Mode for API Calls and Prevent Word Repetition**
+        // FEATURE: JSON Mode for API Calls and Prevent Word Repetition
         const existingWordsList = existingWords.join(', ');
         const prompt = `You are a helpful language model assistant for a first grader. Given the partial sentence "${sentence}", please suggest a list of 5-7 simple words that a 6-year-old would know. The next word should be a "${nextPartType}". If there is a theme, like "${theme}", try to suggest words related to it.
         The following words are already in the word bank, so please suggest different ones: [${existingWordsList}].
@@ -322,7 +322,7 @@ class SentenceBuilder {
             this.state.sentenceWordsArray.forEach((wordObj, index) => {
                 const span = document.createElement('span');
                 span.textContent = wordObj.word;
-                span.dataset.index = index; // **FEATURE: Tap to Edit (Index)**
+                span.dataset.index = index; // FEATURE: Tap to Edit (Index)
                 const colorClass = colorMap[wordObj.type] || colorMap['other'];
                 // Added 'tappable' class for tap-to-edit styling/cursor
                 span.className = `sentence-word ${colorClass} fade-in tappable`; 
@@ -366,7 +366,6 @@ class SentenceBuilder {
 
     async _handleHighFiveClick() {
         const sentenceText = this.state.sentenceWordsArray.map(w => w.word).join(' ');
-        // We do NOT use JSON mode for this check, as we only want a simple word response.
         const checkPrompt = `You are a helpful language model. The sentence is "${sentenceText}". Is it grammatically complete? Answer with only one of these words: VALID or INVALID.`;
         this.elements.highFiveBtn.disabled = true;
 
@@ -377,25 +376,29 @@ class SentenceBuilder {
             if (feedback.trim().toLowerCase().includes("valid")) {
                 await this._handleValidSentence();
             } else {
-                // **FEATURE: Offer More Specific Hints (Gently Correct)**
+                // FEATURE: Offer More Specific Hints (Gently Correct)
                 const hintPrompt = `You are a friendly teacher for a 6-year-old. The child wrote: "${sentenceText}". This sentence is incorrect. Gently correct it for them and give one simple, encouraging sentence explaining the change. For example: "Great try! We can fix that by saying 'The dog runs.' See how 'runs' works better with one dog?"`;
-                const hint = await callGeminiAPI(hintPrompt);
-                // **FEATURE: Visual Feedback (Shake)** - Requires CSS, but we can log the action
+                // FEATURE: Visual Feedback (Shake)
                 this.elements.sentenceDisplay.classList.add('shake-animation');
                 this.elements.sentenceDisplay.addEventListener('animationend', () => {
                     this.elements.sentenceDisplay.classList.remove('shake-animation');
                 }, { once: true });
+                const hint = await callGeminiAPI(hintPrompt);
                 this._showMessage(hint, 'bg-info', SentenceBuilder.DURATION.INFO);
             }
         } catch (error) {
-            this._showMessage('Hmm, I can’t check that sentence right now. Please try again! 👍', 'bg-warning', SentenceBuilder.DURATION.WARNING);
+            // UPGRADE: Graceful API Failure Handling
+            this._showMessage('Hmm, I can’t check that sentence right now. Let’s try a new one! 👍', 'bg-warning', SentenceBuilder.DURATION.WARNING);
+            await delay(SentenceBuilder.DURATION.WARNING); // Wait for the user to read the warning
+            this._clearSentence(); // Clears the current sentence and fetches new words
         } finally {
+            // Re-enable the button if the sentence is still present and complete
             this._renderHighFiveButton();
         }
     }
 
     async _handleValidSentence() {
-        // **FEATURE: Visual Feedback (Confetti/Sparkle)** - Requires CSS
+        // FEATURE: Visual Feedback (Confetti/Sparkle)
         this.elements.sentenceDisplay.classList.add('confetti-animation');
         this.elements.sentenceDisplay.addEventListener('animationend', () => {
             this.elements.sentenceDisplay.classList.remove('confetti-animation');
