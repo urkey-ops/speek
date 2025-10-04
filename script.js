@@ -1,7 +1,7 @@
 // This is the main application file for the Sentence Lab.
-// This version (v4.4) applies a more robust fix to the API JSON payload error,
-// using a conditional 'if' block instead of the spread operator to ensure 
-// 'generationConfig' is only present when jsonMode is true.
+// This version (v4.5) incorporates critical non-API changes for robustness,
+// including safer initialization, immediate button disabling during API calls,
+// and clearer state transitions for features like 'Tap to Edit'.
 
 // -------------------------------------------------------------
 // SECURE API KEY HANDLING
@@ -38,7 +38,6 @@ const callGeminiAPI = async (prompt, jsonMode = false) => {
     };
 
     // CRITICAL FIX: Conditionally add generationConfig only when jsonMode is true.
-    // This prevents the persistent 400 error.
     if (jsonMode) {
         requestBody.generationConfig = {
             responseMimeType: "application/json",
@@ -127,12 +126,14 @@ class SentenceBuilder {
     async init() {
         try {
             const response = await fetch('./words.json');
-            if (!response.ok) throw new Error('words.json not found');
+            if (!response.ok) throw new Error('words.json not found or failed to fetch');
             this.state.allWordsData = await response.json();
             this._renderThemeSelector();
         } catch (error) {
+            // MUST-HAVE: Stop application initialization gracefully on critical data failure.
             console.error("Failed to load words.json:", error);
-            this.elements.themeSelector.innerHTML = `<h1 class="text-2xl text-red-600">Error: Could not load word data.</h1>`;
+            this.elements.themeSelector.innerHTML = `<h1 class="text-2xl text-red-600 p-8">Error: Could not load word data. Application halted.</h1>`;
+            this.elements.themeSelector.classList.remove('hidden'); 
         }
     }
 
@@ -170,7 +171,7 @@ class SentenceBuilder {
         });
     }
     
-    // NEW METHOD: Tap to Edit Logic
+    // UPDATED: Tap to Edit Logic for state integrity
     _handleSentenceWordTap(wordElement) {
         const wordIndex = parseInt(wordElement.dataset.index);
         
@@ -178,10 +179,17 @@ class SentenceBuilder {
         this.state.sentenceWordsArray.splice(wordIndex);
         
         this._renderSentence();
+        
+        // MUST-HAVE: Clear current words and display loading before fetching new ones
+        this.state.wordBank = []; 
+        this._renderWordBank();
+        
         this._fetchNextWords();
     }
 
     _renderThemeSelector() {
+        if (!this.state.allWordsData?.themes) return; // Defensive check
+
         this.state.allWordsData.themes.forEach(theme => {
             const button = document.createElement('button');
             button.className = 'theme-button squircle';
@@ -233,20 +241,24 @@ class SentenceBuilder {
             throw new Error("Invalid AI response structure (missing 'words' array).");
         } catch (error) {
             console.error('Failed to get AI words, using fallback:', error);
-            // Fallback logic for when the API fails or returns bad data. (Kept for robustness)
+            
+            // Fallback logic 
             const level = LEARNING_LEVELS[this.state.currentLevel];
             const fallbackType = level.structure[this.state.sentenceWordsArray.length];
             let fallbackWords = [];
+            
             if (['determiner', 'preposition', 'punctuation'].includes(fallbackType)) {
                 fallbackWords = this.state.allWordsData.miscWords[fallbackType];
             } else {
                 fallbackWords = this.state.allWordsData.words[fallbackType][this.state.currentTheme];
             }
+            
             const randomWords = fallbackWords
-                .filter(word => !existingWords.includes(word)) // Filter out existing words
+                .filter(word => !existingWords.includes(word)) 
                 .sort(() => 0.5 - Math.random())
                 .slice(0, 5)
                 .map(word => ({ word: word.trim(), type: fallbackType, theme: this.state.currentTheme }));
+
             this._showMessage('Hmm, having trouble. Here are some words!', 'bg-info', SentenceBuilder.DURATION.INFO);
             return randomWords;
         }
@@ -263,9 +275,11 @@ class SentenceBuilder {
             return;
         }
 
+        // MUST-HAVE: Disable buttons and show loading *before* async call
         this._showMessage('Thinking...', 'bg-info', SentenceBuilder.DURATION.THINKING);
-        this.elements.wordBankContainer.classList.add('loading');
         this.elements.shuffleWordsBtn.disabled = true;
+        this.elements.highFiveBtn.disabled = true; // Disable High Five during thinking
+        this.elements.wordBankContainer.classList.add('loading');
 
         const currentSentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
         const existingWords = this.state.wordBank.map(w => w.word);
@@ -275,12 +289,13 @@ class SentenceBuilder {
             // Use local word list for common words
             words = this.state.allWordsData.miscWords[nextPart].map(word => ({ word: word, type: nextPart, theme: this.state.currentTheme }));
         } else {
-            // Fetch AI words, passing the list of words currently in the bank
+            // Fetch AI words
             words = await this._getAIWords(currentSentence, nextPart, this.state.currentTheme, existingWords);
         }
 
         this.state.wordBank = words.sort((a, b) => a.word.localeCompare(b.word));
 
+        // Re-enable buttons and hide loading *after* async call
         this.elements.wordBankContainer.classList.remove('loading');
         this.elements.shuffleWordsBtn.disabled = false;
         this._renderWordBank();
@@ -293,18 +308,19 @@ class SentenceBuilder {
         if (this.state.wordBank.length === 0) {
             this.elements.wordBankContainer.innerHTML = '<p class="text-gray-500 italic">Sentence complete! High Five ready! ✋</p>';
             this._hideMessage();
-            return;
+        } else {
+            this.state.wordBank.forEach(wordObj => {
+                const button = document.createElement('button');
+                button.textContent = wordObj.word;
+                button.dataset.type = wordObj.type;
+                const colorClass = colorMap[wordObj.type] || colorMap['other'];
+                button.className = `word-button squircle ${colorClass} fade-in`;
+                this.elements.wordBankContainer.appendChild(button);
+            });
+            this._hideMessage();
         }
-
-        this.state.wordBank.forEach(wordObj => {
-            const button = document.createElement('button');
-            button.textContent = wordObj.word;
-            button.dataset.type = wordObj.type;
-            const colorClass = colorMap[wordObj.type] || colorMap['other'];
-            button.className = `word-button squircle ${colorClass} fade-in`;
-            this.elements.wordBankContainer.appendChild(button);
-        });
-        this._hideMessage();
+        // Ensure high-five button is disabled if word bank is not empty (sentence not complete)
+        this._renderHighFiveButton(); 
     }
 
     _handleWordClick(wordElement) {
@@ -331,6 +347,7 @@ class SentenceBuilder {
                 // Added 'tappable' class for tap-to-edit styling/cursor
                 span.className = `sentence-word ${colorClass} fade-in tappable`; 
                 this.elements.sentenceDisplay.appendChild(span);
+                // Logic to add a space unless the next word is punctuation
                 if (index < this.state.sentenceWordsArray.length - 1 && this.state.sentenceWordsArray[index + 1].type !== 'punctuation') {
                     this.elements.sentenceDisplay.appendChild(document.createTextNode(' '));
                 }
@@ -356,7 +373,9 @@ class SentenceBuilder {
     _readSentenceAloud() {
         const sentence = this.state.sentenceWordsArray.map(w => w.word).join(' ');
         if ('speechSynthesis' in window && sentence.length > 0) {
-            speechSynthesis.speak(new SpeechSynthesisUtterance(sentence));
+             const utterance = new SpeechSynthesisUtterance(sentence);
+             utterance.lang = 'en-US'; // RECOMMENDED: Set language for consistent pronunciation
+             speechSynthesis.speak(utterance);
         } else if (sentence.length > 0) {
             this._showMessage('Sorry, I can\'t read aloud on this browser.', 'bg-warning', SentenceBuilder.DURATION.WARNING);
         }
@@ -371,6 +390,8 @@ class SentenceBuilder {
     async _handleHighFiveClick() {
         const sentenceText = this.state.sentenceWordsArray.map(w => w.word).join(' ');
         const checkPrompt = `You are a helpful language model. The sentence is "${sentenceText}". Is it grammatically complete? Answer with only one of these words: VALID or INVALID.`;
+        
+        // MUST-HAVE: Disable button immediately to prevent double-click abuse
         this.elements.highFiveBtn.disabled = true;
 
         try {
@@ -396,7 +417,7 @@ class SentenceBuilder {
             await delay(SentenceBuilder.DURATION.WARNING); // Wait for the user to read the warning
             this._clearSentence(); // Clears the current sentence and fetches new words
         } finally {
-            // Re-enable the button if the sentence is still present and complete
+            // Re-enable the button if the sentence is still present and complete (handled by _renderHighFiveButton)
             this._renderHighFiveButton();
         }
     }
