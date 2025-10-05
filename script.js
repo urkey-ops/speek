@@ -407,8 +407,8 @@ class SentenceBuilder {
             
             let words;
             if (['determiner', 'preposition', 'punctuation'].includes(nextPart)) {
-                words = (this.state.allWordsData.miscWords[nextPart] || [])
-                    .map(word => ({ word: word, type: nextPart, theme: this.state.currentTheme }));
+                const miscWords = this.state.allWordsData.miscWords[nextPart] || [];
+                words = miscWords.map(word => ({ word: word, type: nextPart, theme: this.state.currentTheme }));
             } else {
                 words = await this._getAIWords(currentSentence, nextPart, this.state.currentTheme, existingWords);
             }
