@@ -304,18 +304,23 @@ class SentenceBuilder {
         });
     }
 
-    _selectTheme(themeName) {
+ _selectTheme(themeName) {
         this.state.currentTheme = themeName;
         this.elements.themeSelector.classList.add('hidden');
         this.elements.appContainer.classList.remove('hidden');
         this.elements.appContainer.classList.add('flex');
+        // Clear any existing content
+        this.elements.wordBankContainer.innerHTML = '';
+        this.state.wordBank = [];
         this._startLevel();
     }
 
-    _startLevel() {
+   _startLevel() {
         this.state.sentencesCompletedAtLevel = 0;
-        this._clearSentence();
+        this.state.sentenceWordsArray = [];
+        this._renderSentence();
         this._updateInstructionText();
+        this._fetchNextWords(); // Explicitly fetch the first words
     }
 
     async _levelUp() {
