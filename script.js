@@ -360,7 +360,8 @@ class SentenceBuilder {
         if (['determiner', 'preposition', 'punctuation'].includes(fallbackType)) {
             fallbackWords = this.state.allWordsData.miscWords[fallbackType] || [];
         } else {
-            fallbackWords = this.state.allWordsData.words[fallbackType]?.[this.state.currentTheme] || [];
+            const typeWords = this.state.allWordsData.words[fallbackType];
+            fallbackWords = (typeWords && typeWords[this.state.currentTheme]) || [];
         }
         
         // Filter out existing words and shuffle properly
