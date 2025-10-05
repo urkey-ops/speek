@@ -573,22 +573,22 @@ class SentenceBuilder {
         }
     }
 
-       async _handleInvalidSentence(sentenceText) {
-        const hintPrompt = `You are a friendly teacher for a 6-year-old. The child wrote: "${sentenceText}". This sentence is incorrect. Gently correct it for them and give one simple, encouraging sentence as a suggestion.`;
-        
-        // Visual feedback (shake animation)
-        this.elements.sentenceDisplay.classList.add('shake-animation');
-        this.elements.sentenceDisplay.addEventListener('animationend', () => {
-            this.elements.sentenceDisplay.classList.remove('shake-animation');
-        }, { once: true });
-        
-        try {
-            const hint = await callGeminiAPI(hintPrompt);
-            this._showMessage(hint, 'bg-info', CONFIG.DURATION.INFO);
-        } catch (error) {
-            this._showMessage('That doesn\'t look quite right. Try again! 💪', 'bg-warning', CONFIG.DURATION.WARNING);
-        }
+    async _handleInvalidSentence(sentenceText) {
+    const hintPrompt = `You are a friendly teacher for a 6-year-old. The child wrote: "${sentenceText}". This sentence is incorrect. Gently correct it for them and give one simple, encouraging sentence as a suggestion.`;
+
+    // Visual feedback (shake animation)
+    this.elements.sentenceDisplay.classList.add('shake-animation');
+    this.elements.sentenceDisplay.addEventListener('animationend', () => {
+        this.elements.sentenceDisplay.classList.remove('shake-animation');
+    }, { once: true });
+
+    try {
+        const hint = await callGeminiAPI(hintPrompt);
+        this._showMessage(hint, 'bg-info', CONFIG.DURATION.INFO);
+    } catch (error) {
+        this._showMessage('That doesn\'t look quite right. Try again! 💪', 'bg-warning', CONFIG.DURATION.WARNING);
     }
+}
     async _handleValidSentence() {
         // Visual feedback (confetti animation)
         this.elements.sentenceDisplay.classList.add('confetti-animation');
