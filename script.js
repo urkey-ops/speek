@@ -573,8 +573,8 @@ class SentenceBuilder {
         }
     }
 
-    async _handleInvalidSentence(sentenceText) {
-        const hintPrompt = `You are a friendly teacher for a 6-year-old. The child wrote: "${sentenceText}". This sentence is incorrect. Gently correct it for them and give one simple, encouraging sentence explaining the change. For example: "Great try! We can fix that by saying 'The dog runs.' See how 'runs' works better with one dog?"`;
+       async _handleInvalidSentence(sentenceText) {
+        const hintPrompt = `You are a friendly teacher for a 6-year-old. The child wrote: "${sentenceText}". This sentence is incorrect. Gently correct it for them and give one simple, encouraging sentence as a suggestion.`;
         
         // Visual feedback (shake animation)
         this.elements.sentenceDisplay.classList.add('shake-animation');
@@ -589,7 +589,6 @@ class SentenceBuilder {
             this._showMessage('That doesn\'t look quite right. Try again! 💪', 'bg-warning', CONFIG.DURATION.WARNING);
         }
     }
-
     async _handleValidSentence() {
         // Visual feedback (confetti animation)
         this.elements.sentenceDisplay.classList.add('confetti-animation');
